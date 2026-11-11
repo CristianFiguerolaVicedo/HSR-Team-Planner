@@ -1,1 +1,259 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=Caveat:wght@500;700&display=swap');
 @import "tailwindcss";
+
+/*
+  Same "Cuaderno del Express" journal as HSRWiki (tokens, paper, photo cards and washi tape are
+  copied from HSRWiki-frontend/src/index.css so both sites look like one product).
+  Planner extras at the end: the "on board" stamp and the character detail dialog.
+*/
+@theme {
+  --font-sans: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --font-hand: 'Caveat', 'Bricolage Grotesque', cursive;
+
+  /* paper */
+  --color-bg-primary: #FBF7EE;
+  --color-bg-secondary: #F4EEE1;
+  --color-bg-card: #FFFDF8;
+  --color-bg-elevated: #F1EADB;
+  /* notebook cover (Astral Express navy) */
+  --color-bg-sidebar: #1F2A44;
+
+  /* ink + accents */
+  --color-accent-cyan: #2F6FAE;
+  --color-accent-cyan-hover: #255C93;
+  --color-accent-cyan-muted: rgba(47, 111, 174, 0.12);
+  --color-accent-gold: #B8820F;
+  --color-accent-gold-hover: #9C6E0B;
+  --color-accent-gold-muted: rgba(201, 138, 18, 0.14);
+  --color-accent-purple: #6E55BE;
+  --color-accent-purple-muted: rgba(110, 85, 190, 0.12);
+  --color-accent-red: #D24A7C;
+  --color-accent-red-muted: rgba(210, 74, 124, 0.12);
+
+  --color-text-primary: #1F2A44;
+  --color-text-secondary: #535E77;
+  --color-text-muted: #858CA0;
+  --color-border: #E4DAC6;
+  --color-border-hover: #C9BB9C;
+  --color-surface-overlay: rgba(31, 42, 68, 0.45);
+
+  /* washi tape, one per element */
+  --color-tape-fire: #F2995E;
+  --color-tape-ice: #86C8EA;
+  --color-tape-lightning: #B99AEA;
+  --color-tape-wind: #7DD0A8;
+  --color-tape-quantum: #8F8FE4;
+  --color-tape-imaginary: #F3CE5A;
+  --color-tape-physical: #BFC3CC;
+}
+
+html, body {
+  min-height: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  /* dotted notebook paper */
+  background-color: var(--color-bg-primary);
+  background-image: radial-gradient(circle, rgba(31, 42, 68, 0.13) 1px, transparent 1.2px);
+  background-size: 22px 22px;
+  font-family: var(--font-sans);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-hand {
+  font-family: var(--font-hand);
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border-hover); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
+::-webkit-scrollbar-corner { background: transparent; }
+
+::selection {
+  background: rgba(243, 206, 90, 0.55);
+  color: var(--color-text-primary);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent-cyan);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* ---------------------------------------------------------------- surfaces */
+
+/* A sheet of paper laid on the page: flat, inked edge, small lift */
+.glass-panel,
+.glass-panel-deep {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: 0 1px 0 rgba(31, 42, 68, 0.04), 0 6px 18px -12px rgba(31, 42, 68, 0.25);
+}
+
+.glass-panel-deep {
+  border-left: 3px solid var(--color-accent-cyan);
+}
+
+/* Generic card (relics, light cones, factions...) */
+.hsr-card,
+.hsr-card-gold {
+  position: relative;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: 0 6px 16px -12px rgba(31, 42, 68, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  overflow: hidden;
+}
+
+.hsr-card-gold {
+  border-color: rgba(201, 138, 18, 0.35);
+}
+
+.hsr-card:hover,
+.hsr-card-gold:hover {
+  border-color: var(--color-border-hover);
+  box-shadow: 0 14px 24px -14px rgba(31, 42, 68, 0.45);
+  transform: translateY(-2px);
+}
+
+/* ---------------------------------------------------------------- the photo card */
+
+/* Instant photo taped into the journal. --tilt is set per card for a hand-placed look. */
+.photo-card {
+  position: relative;
+  background: #FFFFFF;
+  padding: 10px 10px 14px;
+  border-radius: 3px;
+  box-shadow: 0 1px 2px rgba(31, 42, 68, 0.12), 0 10px 22px -14px rgba(31, 42, 68, 0.45);
+  transform: rotate(var(--tilt, 0deg));
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.photo-card:hover,
+.photo-card:focus-visible {
+  transform: rotate(0deg) translateY(-3px);
+  box-shadow: 0 2px 3px rgba(31, 42, 68, 0.12), 0 18px 28px -16px rgba(31, 42, 68, 0.55);
+}
+
+.photo-card__picture {
+  background: var(--photo-tint, #EEF1F6);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+/* Washi tape strip with torn ends */
+.washi {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  width: 74px;
+  height: 22px;
+  transform: translateX(-50%) rotate(var(--tape-tilt, -3deg));
+  background: var(--tape, var(--color-tape-physical));
+  opacity: 0.85;
+  clip-path: polygon(3% 0, 97% 4%, 100% 30%, 96% 55%, 100% 85%, 95% 100%, 4% 96%, 0 70%, 4% 45%, 0 15%);
+  background-image: repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.22) 0 4px, transparent 4px 9px);
+  pointer-events: none;
+}
+
+.tape-fire { --tape: var(--color-tape-fire); --photo-tint: #FDEDE2; }
+.tape-ice { --tape: var(--color-tape-ice); --photo-tint: #E8F4FB; }
+.tape-lightning { --tape: var(--color-tape-lightning); --photo-tint: #F1EAFB; }
+.tape-wind { --tape: var(--color-tape-wind); --photo-tint: #E6F6EE; }
+.tape-quantum { --tape: var(--color-tape-quantum); --photo-tint: #ECECFA; }
+.tape-imaginary { --tape: var(--color-tape-imaginary); --photo-tint: #FCF4DA; }
+.tape-physical { --tape: var(--color-tape-physical); --photo-tint: #F0F1F3; }
+
+/* ---------------------------------------------------------------- index page (sidebar) */
+
+/*
+  A ruled notebook page: blue rules every 44px, a red margin line, and a spiral binding
+  down the right edge. Rows (.ruled-row) are exactly one or more rules tall so text sits
+  on the lines.
+.section-divider {
+  height: 0;
+  border-top: 2px dashed var(--color-border-hover);
+  margin: 2rem 0;
+}
+
+.progress-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--color-bg-elevated);
+  overflow: hidden;
+}
+
+.progress-bar-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+.progress-bar-fill.cyan { background: var(--color-accent-cyan); }
+.progress-bar-fill.gold { background: var(--color-accent-gold); }
+.progress-bar-fill.purple { background: var(--color-accent-purple); }
+.progress-bar-fill.red { background: var(--color-accent-red); }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in { animation: fadeIn 0.3s ease-out both; }
+
+/* ---------------------------------------------------------------- planner extras */
+
+/* Rubber stamp on the photo of a character you own */
+.stamp {
+  position: absolute;
+  top: 16px;
+  right: 14px;
+  z-index: 10;
+  padding: 1px 6px;
+  border: 2px solid var(--color-accent-red);
+  border-radius: 4px;
+  color: var(--color-accent-red);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  background: rgba(255, 253, 248, 0.85);
+  transform: rotate(8deg);
+  pointer-events: none;
+  animation: stamp-in 0.22s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+@keyframes stamp-in {
+  from { transform: rotate(8deg) scale(1.6); opacity: 0; }
+  to { transform: rotate(8deg) scale(1); opacity: 1; }
+}
+
+/* Characters you don't own fade back on the roster page */
+.photo-card[data-dimmed="true"] { opacity: 0.55; }
+.photo-card[data-dimmed="true"] img { filter: grayscale(0.85); }
+
+/* Character detail: native <dialog>, so focus trap and Esc come from the browser */
+.detail-dialog {
+  width: min(780px, calc(100vw - 24px));
+  max-height: calc(100vh - 48px);
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-bg-card);
+  color: var(--color-text-primary);
+  box-shadow: 0 24px 60px -20px rgba(31, 42, 68, 0.55);
+}
+
+.detail-dialog::backdrop {
+  background: var(--color-surface-overlay);
+}
+
+.detail-dialog[open] { animation: fadeIn 0.18s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+  .photo-card, .photo-card:hover { transform: none; }
+}

@@ -6,9 +6,9 @@
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0-6DB33F?logo=springboot&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169E1?logo=postgresql&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
 
-> Status: **project skeleton**. Backend domain, entities, endpoints and tests are in place; the frontend pages are stubs.
+> Status: **in progress**. Backend done (domain, endpoints, tests); frontend has the catalog and "My characters". Team builder, SPD calculator and shared teams are next.
 
 ## What it does
 
@@ -37,11 +37,13 @@ HSR-Team-Planner/
 │   │   ├── db/migration/            Flyway migrations
 │   │   └── catalog/overrides.json   Manual roles, aliases and variant groups
 │   └── src/test/java/...            JUnit 5 tests
-├── frontend/                        React + TypeScript + Vite
+├── frontend/                        React + Vite + Tailwind CSS (same setup as HSRWiki-frontend)
 │   └── src/
-│       ├── api/                     Typed API client and DTO types
-│       ├── features/                catalog · roster · team-builder · spd · share
-│       └── pages/                   One page per route
+│       ├── pages/                   One page per route (lazy-loaded)
+│       ├── components/              Cards, filters, character detail, layout
+│       ├── hooks/                   useCharacters, useRoster (localStorage store), useSynergies
+│       ├── services/                axios client with retries + one function per endpoint
+│       └── util/                    Pure logic (filters, roster, game labels) + node --test tests
 └── docker-compose.yml               Local PostgreSQL
 ```
 
@@ -113,6 +115,8 @@ cd ../frontend
 cp .env.example .env
 npm install
 npm run dev                          # http://localhost:5173
+npm test                             # util tests (node --test)
+npm run lint
 ```
 
 ## Configuration
