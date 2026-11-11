@@ -1,0 +1,15 @@
+# Local PostgreSQL for the backend: docker compose up -d
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: hsrplanner
+      POSTGRES_USER: hsrplanner
+      POSTGRES_PASSWORD: hsrplanner
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

@@ -1,0 +1,19 @@
+{
+  "_comment": "Manual fixes applied on every sync. Names are matched ignoring case, spaces and punctuation.",
+  "aliases": {
+    "Topaz": "Topaz & Numby",
+    "Permansor Terrae": "Dan Heng • Permansor Terrae"
+  },
+  "roles": {
+    "Kafka": "MAIN_DPS",
+    "Black Swan": "MAIN_DPS",
+    "Acheron": "MAIN_DPS",
+    "Aglaea": "MAIN_DPS",
+    "Castorice": "MAIN_DPS",
+    "Tribbie": "AMPLIFIER",
+    "Trailblazer (Remembrance)": "AMPLIFIER",
+    "Topaz & Numby": "SUB_DPS"
+  },
+  "variantGroups": {
+  }
+}

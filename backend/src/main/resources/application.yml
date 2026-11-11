@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: hsr-team-planner
+  datasource:
+    # Override with SPRING_DATASOURCE_URL / _USERNAME / _PASSWORD (Railway, Fly.io...)
+    url: jdbc:postgresql://localhost:5432/hsrplanner
+    username: hsrplanner
+    password: hsrplanner
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate   # Flyway owns the schema (db/migration)
+  mvc:
+    problemdetails:
+      enabled: true        # validation errors also answered as application/problem+json
+
+server:
+  port: ${PORT:8080}
+
+planner:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:4173}
+  hsrwiki:
+    base-url: ${HSRWIKI_BASE_URL:https://hsrwiki-backend.onrender.com}
+    timeout: 90s           # Render's free plan can take ~1 min to wake up
+  sync:
+    on-startup: ${SYNC_ON_STARTUP:if-empty}   # always | if-empty | never
+    # HSRWiki refreshes its data on Wednesdays at 18:00 UTC; we pull an hour later
+    cron: ${SYNC_CRON:0 0 19 * * WED}
+  admin:
+    token: ${ADMIN_TOKEN:}   # blank = POST /api/admin/sync disabled
