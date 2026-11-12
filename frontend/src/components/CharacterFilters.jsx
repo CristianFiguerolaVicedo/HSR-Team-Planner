@@ -11,14 +11,17 @@ const chipClass = (active) =>
 
 const RARITIES = [5, 4];
 
-const Section = ({ icon: Icon, iconClass, title, children }) => (
+const Section = ({ icon, iconClass, title, children }) => {
+  const Icon = icon;
+  return (
   <div>
     <h3 className="text-sm font-semibold text-text-primary mb-2 flex items-center gap-2">
       <Icon size={16} className={iconClass} /> {title}
     </h3>
     <div className="flex flex-wrap gap-2">{children}</div>
   </div>
-);
+  );
+};
 
 /** Ownership switch with counts, same as HSRWiki's OwnershipFilter. */
 export const OwnershipFilter = ({ value, onChange, ownedCount, total }) => (

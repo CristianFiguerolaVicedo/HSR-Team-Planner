@@ -37,7 +37,9 @@ const Layout = ({ children }) => (
           <span className="font-hand text-xl text-accent-cyan hidden sm:inline">dispatch office</span>
         </NavLink>
         <nav className="flex flex-wrap gap-1" aria-label="Main">
-          {LINKS.map(({ to, label, icon: Icon, end }) => (
+          {LINKS.map(({ to, label, icon, end }) => {
+            const Icon = icon;
+            return (
             <NavLink
               key={to}
               to={to}
@@ -49,7 +51,8 @@ const Layout = ({ children }) => (
               <Icon size={16} aria-hidden="true" />
               {label}
             </NavLink>
-          ))}
+            );
+          })}
         </nav>
       </div>
     </header>

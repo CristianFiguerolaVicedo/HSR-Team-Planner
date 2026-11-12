@@ -76,12 +76,15 @@ const CharacterDetail = ({ char, onClose, onSelect }) => {
   );
 };
 
-const Fact = ({ icon: Icon, label, children }) => (
+const Fact = ({ icon, label, children }) => {
+  const Icon = icon;
+  return (
   <div className="rounded-lg bg-bg-secondary px-3 py-2">
     <dt className="flex items-center gap-1 text-xs text-text-muted"><Icon size={12} /> {label}</dt>
     <dd className="mt-0.5 flex items-center gap-1.5 font-semibold text-text-primary">{children}</dd>
   </div>
-);
+  );
+};
 
 /** "I have it" plus the Eidolon picker, like HSRWiki's CollectionControl. */
 const RosterControl = ({ id }) => {
