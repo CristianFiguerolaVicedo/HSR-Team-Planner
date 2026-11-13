@@ -1,12 +1,11 @@
 import axios from "axios";
 
-// Same client as HSRWiki-frontend. VITE_API_BASE_URL is read when the site is built: set it on Vercel
-// to the deployed planner API. Without it the site talks to the local backend.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
-
-if (import.meta.env.PROD && !import.meta.env.VITE_API_BASE_URL) {
-  console.warn("VITE_API_BASE_URL is not set: the site is calling http://localhost:8080/api");
-}
+// Same client as HSRWiki-frontend, with one difference: the API is called on the SAME origin as the site
+// ("/api"). In development Vite forwards /api to the backend (vite.config.js); in production Vercel does
+// (vercel.json rewrites). Same origin is what makes login work: the session cookie and the CSRF cookie
+// are first-party, and axios copies the XSRF-TOKEN cookie into the X-XSRF-TOKEN header by itself.
+// VITE_API_BASE_URL still exists to point at another API, but login won't work cross-origin.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 // Free hosting plans can put the API to sleep, and the first request then takes a while.
 // So requests wait long enough, GETs are retried for up to 4 minutes while the server is

@@ -85,6 +85,9 @@ All endpoints are under `/api`. Errors are `application/problem+json`.
 | POST | `/teams` | Save a team → `201` with its `shareCode`; `422` if it breaks a rule |
 | GET | `/teams/{shareCode}` | A shared team, with SPD analysis per slot |
 | POST | `/recommendations` | Best teams from your characters: `{"owned": {"1102": 2, ...}, "gameMode": "PURE_FICTION", "mustInclude": [1102]}` |
+| GET | `/auth/providers` | Login buttons to show (only providers with credentials) |
+| GET | `/me` | Logged-in user (`401` without a session) |
+| POST | `/logout` | Ends the session |
 | GET | `/import/{uid}` | Characters and Eidolons in a player's in-game showcase (Enka.Network, Mihomo as fallback) |
 | POST | `/admin/sync` | Re-sync the catalog now (header `X-Admin-Token`) |
 
@@ -105,6 +108,18 @@ Score = **synergy** (pairs recommended together in HSRWiki's guides) + **roles**
 ## Import by UID
 
 `GET /api/import/{uid}` reads the player's **in-game profile showcase** (only those characters, plus the support character, are public) from [Enka.Network](https://enka.network) and falls back to [Mihomo](https://api.mihomo.me) if Enka doesn't answer. Following Enka's rules, requests carry a custom User-Agent and each UID is cached for the `ttl` Enka returns (1–10 minutes). Their documented errors become clear messages: invalid UID (400), unknown player (404), game maintenance (503), too many requests (429). Nothing is stored: the frontend shows what would change and merges it into "My characters" when the user confirms.
+
+## Login (Discord / Google)
+
+Optional: everything works without an account. Login uses Spring Security's OAuth2 client with the **authorization code** flow and a **server session** (HttpOnly `JSESSIONID` cookie), so no token ever reaches JavaScript. Only the provider id, display name and avatar are read (`identify` on Discord, `openid profile` on Google): no email.
+
+The site and the API share one origin: Vite forwards `/api`, `/oauth2` and `/login/oauth2` to the backend in development, and Vercel will do the same in production. That keeps the session and CSRF cookies first-party. Because the session is a cookie, every POST/PUT/DELETE carries a CSRF token: Spring writes it to the `XSRF-TOKEN` cookie and axios sends it back in the `X-XSRF-TOKEN` header.
+
+Local setup:
+
+1. Create an application in the [Discord Developer Portal](https://discord.com/developers/applications) (OAuth2 → copy Client ID, reset and copy Client Secret, add the redirect `http://localhost:5173/login/oauth2/code/discord`) and/or an OAuth client in Google Cloud (Google Auth Platform → Branding, Audience with yourself as test user, Clients → Web application, redirect `http://localhost:5173/login/oauth2/code/google`).
+2. `cp backend/.env.example backend/.env` and fill in the ids and secrets. `backend/.env` is git-ignored.
+3. Open the site through Vite (`http://localhost:5173`), not the API port. Providers without credentials are hidden.
 
 ## Catalog sync
 
@@ -141,10 +156,12 @@ npm run lint
 | `HSRWIKI_BASE_URL` | `https://hsrwiki-backend.onrender.com` | Where the catalog comes from |
 | `SYNC_ON_STARTUP` | `if-empty` | `always`, `if-empty` or `never` |
 | `SYNC_CRON` | `0 0 19 * * WED` | Weekly sync (UTC) |
+| `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET`, `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | not configured (login hidden) | OAuth credentials (or in `backend/.env` locally) |
+| `SESSION_COOKIE_SECURE` | `false` | `true` in production (HTTPS only cookie) |
 | `ENKA_URL` / `MIHOMO_URL` | `https://enka.network` / `https://api.mihomo.me` | UID import providers |
 | `ADMIN_TOKEN` | empty (admin disabled) | Token for `POST /api/admin/sync` |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:5173,http://localhost:4173` | Frontend origins |
-| `VITE_API_BASE_URL` (frontend) | `http://localhost:8080/api` in dev | API used by the site |
+| `VITE_API_BASE_URL` (frontend) | `/api` (same origin) | Leave unset: login needs the same-origin proxy |
 
 ## Deployment
 

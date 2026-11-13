@@ -24,3 +24,21 @@ export const getRecommendations = (body) => postJson("/recommendations", body);
 
 /** Characters in a player's in-game showcase (Enka.Network, Mihomo as fallback). Not retried. */
 export const importFromUid = (uid) => getOnce(`/import/${encodeURIComponent(uid)}`);
+
+// --- account (login with Discord / Google) ---------------------------------------------------
+
+/** Login buttons to show: [{ id, name, loginUrl }]. Empty when no provider is configured. */
+export const getAuthProviders = () => fetchJson("/auth/providers");
+
+/** The logged-in user ({ provider, providerId, name, avatarUrl }), or null without a session. */
+export const getMe = async () => {
+  try {
+    return await getOnce("/me");
+  } catch (err) {
+    if (err.response?.status === 401) return null;
+    throw err;
+  }
+};
+
+/** Ends the session on the server (POST, so it carries the CSRF token). */
+export const logout = () => postJson("/logout");

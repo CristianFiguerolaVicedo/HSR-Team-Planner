@@ -1,6 +1,9 @@
 spring:
   application:
     name: hsr-team-planner
+  config:
+    # Local secrets (OAuth client ids/secrets). Never committed: see .env.example
+    import: optional:file:.env[.properties]
   datasource:
     # Override with SPRING_DATASOURCE_URL / _USERNAME / _PASSWORD (Railway, Fly.io...)
     url: jdbc:postgresql://localhost:5432/hsrplanner
@@ -13,9 +16,42 @@ spring:
   mvc:
     problemdetails:
       enabled: true        # validation errors also answered as application/problem+json
+  security:
+    oauth2:
+      client:
+        registration:
+          # "not-configured" keeps the app starting without secrets; that provider is just hidden
+          discord:
+            client-name: Discord
+            client-id: ${DISCORD_CLIENT_ID:not-configured}
+            client-secret: ${DISCORD_CLIENT_SECRET:not-configured}
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: identify              # id, username and avatar only (no email)
+          google:
+            client-name: Google
+            client-id: ${GOOGLE_CLIENT_ID:not-configured}
+            client-secret: ${GOOGLE_CLIENT_SECRET:not-configured}
+            scope: openid, profile       # name and picture only (no email)
+        provider:
+          # Google is built into Spring; Discord has to be described by hand
+          discord:
+            authorization-uri: https://discord.com/oauth2/authorize
+            token-uri: https://discord.com/api/oauth2/token
+            user-info-uri: https://discord.com/api/users/@me
+            user-name-attribute: id
 
 server:
   port: ${PORT:8080}
+  # Behind the Vite proxy / Vercel rewrites: trust X-Forwarded-Host/Proto so OAuth redirect URIs use the site's address
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        same-site: lax
+        secure: ${SESSION_COOKIE_SECURE:false}   # true in production (HTTPS)
 
 planner:
   cors:
@@ -29,6 +65,10 @@ planner:
     cron: ${SYNC_CRON:0 0 19 * * WED}
   admin:
     token: ${ADMIN_TOKEN:}   # blank = POST /api/admin/sync disabled
+  auth:
+    # Where the browser lands after logging in (relative = same site, through the proxy)
+    success-url: ${AUTH_SUCCESS_URL:/}
+    failure-url: ${AUTH_FAILURE_URL:/?login=error}
   importer:
     enka-url: ${ENKA_URL:https://enka.network}
     mihomo-url: ${MIHOMO_URL:https://api.mihomo.me}

@@ -1,7 +1,8 @@
-import { memo, useSyncExternalStore } from "react";
+import { memo, useState, useSyncExternalStore } from "react";
 import { NavLink } from "react-router-dom";
-import { Calculator, Swords, TrainFront, UsersRound } from "lucide-react";
+import { Calculator, Swords, TrainFront, UsersRound, X } from "lucide-react";
 import { isServerWaking, onServerWakingChange } from "../services/apiClient";
+import AccountMenu from "./AccountMenu";
 
 const LINKS = [
   { to: "/", label: "Characters", icon: TrainFront, end: true },
@@ -24,6 +25,24 @@ const WakingBanner = () => {
         <span className="font-semibold">Waking up the server…</span>{" "}
         <span className="text-text-secondary">The first load can take a moment while the API starts.</span>
       </p>
+    </div>
+  );
+};
+
+/** Shown when Discord/Google sent the user back with an error (the backend redirects to /?login=error). */
+const LoginErrorBanner = () => {
+  const [visible, setVisible] = useState(() => new URLSearchParams(window.location.search).get("login") === "error");
+  if (!visible) return null;
+  const close = () => {
+    setVisible(false);
+    window.history.replaceState(null, "", window.location.pathname); // drop ?login=error
+  };
+  return (
+    <div role="alert" className="max-w-7xl mx-auto mt-4 px-4">
+      <div className="glass-panel p-3 flex items-center gap-3 text-sm">
+        <span className="flex-1"><span className="font-semibold text-accent-red">Sign in didn't work.</span> Try again, or keep using the planner without an account.</span>
+        <button type="button" onClick={close} aria-label="Dismiss" className="p-1 rounded text-text-muted hover:text-text-primary"><X size={16} /></button>
+      </div>
     </div>
   );
 };
@@ -54,8 +73,10 @@ const Layout = ({ children }) => (
             );
           })}
         </nav>
+        <div className="ml-auto"><AccountMenu /></div>
       </div>
     </header>
+    <LoginErrorBanner />
     <main className="max-w-7xl mx-auto px-4 py-8">{children}</main>
     <WakingBanner />
   </div>
