@@ -125,3 +125,18 @@ export const slotsFromRecommendation = (team, draft) => {
   while (slots.length < TEAM_SIZE) slots.push(null);
   return slots;
 };
+
+/**
+ * Puts a character in the first free slot, e.g. when HSRWiki opens /builder?with=1102.
+ * Unchanged when it's already in the team, the team is full or the id isn't a number.
+ */
+export const addCharacterToDraft = (draft, characterId, eidolon = 0) => {
+  const id = Number(characterId);
+  if (!Number.isInteger(id) || id <= 0) return draft;
+  if (draft.slots.some((slot) => slot?.characterId === id)) return draft;
+  const free = draft.slots.findIndex((slot) => !slot);
+  if (free === -1) return draft;
+  const slots = [...draft.slots];
+  slots[free] = newSlot(id, eidolon);
+  return { ...draft, slots };
+};

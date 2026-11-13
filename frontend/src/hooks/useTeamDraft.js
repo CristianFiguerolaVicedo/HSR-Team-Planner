@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { emptyDraft, newSlot } from "../util/team";
+import { addCharacterToDraft, emptyDraft, newSlot } from "../util/team";
 
 /*
  * Team being built, saved in this browser so a reload or a visit to another page doesn't lose it.
@@ -20,8 +20,13 @@ export const loadDraft = (draft) => {
   try { localStorage.setItem(KEY, JSON.stringify(draft)); } catch { /* nothing to do */ }
 };
 
-export const useTeamDraft = () => {
-  const [draft, setDraft] = useState(readDraft);
+/**
+ * @param incoming optional { characterId, eidolon } to drop into the first free slot when the page opens
+ *                 (HSRWiki's "Plan a team with X" opens /builder?with=1102). Only read on the first render.
+ */
+export const useTeamDraft = (incoming) => {
+  const [draft, setDraft] = useState(() =>
+    incoming?.characterId ? addCharacterToDraft(readDraft(), incoming.characterId, incoming.eidolon ?? 0) : readDraft());
 
   useEffect(() => {
     try { localStorage.setItem(KEY, JSON.stringify(draft)); } catch { /* keep it for this visit */ }

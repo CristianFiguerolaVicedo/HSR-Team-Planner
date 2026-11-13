@@ -1,8 +1,9 @@
 import { memo, useState, useSyncExternalStore } from "react";
 import { NavLink } from "react-router-dom";
-import { Calculator, Swords, TrainFront, UsersRound, X } from "lucide-react";
+import { BookOpen, Calculator, Swords, TrainFront, UsersRound, X } from "lucide-react";
 import { isServerWaking, onServerWakingChange } from "../services/apiClient";
 import AccountMenu from "./AccountMenu";
+import { wikiUrl } from "../util/links";
 
 const LINKS = [
   { to: "/", label: "Characters", icon: TrainFront, end: true },
@@ -73,7 +74,15 @@ const Layout = ({ children }) => (
             );
           })}
         </nav>
-        <div className="ml-auto"><AccountMenu /></div>
+        <div className="ml-auto flex items-center gap-1">
+          {/* Sister project: the full wiki (builds, materials, lore) */}
+          <a href={wikiUrl()} target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated">
+            <BookOpen size={16} aria-hidden="true" /> HSRWiki <span aria-hidden="true">↗</span>
+            <span className="sr-only">(opens in a new tab)</span>
+          </a>
+          <AccountMenu />
+        </div>
       </div>
     </header>
     <LoginErrorBanner />

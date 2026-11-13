@@ -1,9 +1,10 @@
 import { useEffect, useRef } from "react";
-import { Check, Flame, Gauge, Plus, Route, Shield, Star, Trash2, X, Zap } from "lucide-react";
+import { BookOpen, Check, Flame, Gauge, Plus, Route, Shield, Star, Trash2, X, Zap } from "lucide-react";
 import { useRoster } from "../hooks/useRoster";
 import { useSynergies } from "../hooks/useSynergies";
 import { EIDOLON_RANGE } from "../util/roster";
 import { ELEMENT, PATH, roleLabel, rolesOf, tagLabel, tapeClass } from "../util/game";
+import { wikiCharacterUrl } from "../util/links";
 
 /**
  * Character detail on top of the catalog, built on the native <dialog>:
@@ -70,6 +71,12 @@ const CharacterDetail = ({ char, onClose, onSelect }) => {
           </dl>
 
           <RosterControl id={char.id} />
+
+          <a href={wikiCharacterUrl(char.id)} target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent-cyan hover:underline underline-offset-4">
+            <BookOpen size={16} aria-hidden="true" /> Builds, skills and materials in HSRWiki <span aria-hidden="true">↗</span>
+            <span className="sr-only">(opens in a new tab)</span>
+          </a>
           <Synergies char={char} onSelect={onSelect} />
         </div>
       </div>

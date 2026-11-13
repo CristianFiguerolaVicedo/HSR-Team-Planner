@@ -10,6 +10,15 @@
 
 > Status: **MVP complete, phase 2 in progress**. Done: catalog, "My characters", team builder with live validation, SPD calculator, share links and a rule-based team recommender, import by UID. Next: Discord/Google login, deployment.
 
+## Sister project: HSRWiki
+
+The planner's data comes from my [HSRWiki](https://github.com/CristianFiguerolaVicedo/HSRWiki-frontend) ([live site](https://hsr-wiki-frontend.vercel.app)), and the two sites link to each other:
+
+- **Planner → wiki**: an "HSRWiki ↗" link in the header, and a link from every character's detail to its wiki page (`/char/{id}`).
+- **Wiki → planner**: a "Team Planner ↗" entry in the wiki's sidebar and a "Plan a team" button on each character page, which opens `/builder?with={id}` here and drops that character into the first free slot.
+
+Both apps use the game's own character ids, so these links are exact.
+
 ## What it does
 
 1. **Catalog** of characters and light cones, synced from my [HSRWiki API](https://github.com/CristianFiguerolaVicedo/HSRWiki-backend).
@@ -165,5 +174,9 @@ npm run lint
 
 ## Deployment
 
-- **Frontend → Vercel.** Root directory `frontend`, set `VITE_API_BASE_URL`. `vercel.json` sends every route to `index.html` so share links work.
-- **Backend → Railway or Fly.io** with the `backend/Dockerfile` and a managed PostgreSQL. Railway exposes the database as `postgresql://…`; Spring needs the JDBC form `jdbc:postgresql://host:port/db` in `SPRING_DATASOURCE_URL`.
+Planned: frontend on **Vercel**, backend on **Railway or Fly.io** with a managed PostgreSQL. Checklist:
+
+1. **Backend**: deploy `backend/Dockerfile`. Set `SPRING_DATASOURCE_URL` in JDBC form (`jdbc:postgresql://host:port/db`; Railway shows `postgresql://…`), `_USERNAME`, `_PASSWORD`, `SESSION_COOKIE_SECURE=true`, `ADMIN_TOKEN` and the OAuth ids/secrets.
+2. **Frontend**: Vercel project with root directory `frontend`. Leave `VITE_API_BASE_URL` **unset** and add rewrites in `vercel.json` that forward `/api/*`, `/oauth2/*` and `/login/oauth2/*` to the backend (before the existing rule that sends every route to `index.html`). Same origin is what keeps login cookies working.
+3. **OAuth**: add the production redirect URIs `https://<planner-domain>/login/oauth2/code/discord` and `.../google` in the Discord Developer Portal and Google Auth Platform.
+4. **HSRWiki**: in the HSRWiki Vercel project, set `VITE_TEAM_PLANNER_URL=https://<planner-domain>` and **redeploy** (Vite reads it at build time). Until then the wiki hides its links to the planner.

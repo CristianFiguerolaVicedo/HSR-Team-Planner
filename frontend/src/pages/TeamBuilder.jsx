@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Eraser, Info } from "lucide-react";
 import { useCharacters } from "../hooks/useCharacters";
 import { useLightcones } from "../hooks/useLightcones";
@@ -31,7 +31,16 @@ const TeamBuilder = () => {
   const { characters, loading, error } = useCharacters();
   const { lightcones } = useLightcones();
   const { owned, eidolon } = useRoster();
-  const { draft, setField, updateSlot, placeCharacter, clearSlot, setSlots, reset } = useTeamDraft();
+  // HSRWiki's "Plan a team with X" opens /builder?with={characterId}
+  const [searchParams] = useSearchParams();
+  const withId = searchParams.get("with");
+  const { draft, setField, updateSlot, placeCharacter, clearSlot, setSlots, reset } =
+    useTeamDraft(withId ? { characterId: withId, eidolon: eidolon(withId) } : null);
+
+  // The character is already in the draft: drop ?with= so a reload doesn't add it again
+  useEffect(() => {
+    if (withId) window.history.replaceState(null, "", window.location.pathname);
+  }, [withId]);
   const [picker, setPicker] = useState(null); // { type: "character" | "lightcone", position }
 
   const charactersById = useMemo(() => byId(characters), [characters]);
