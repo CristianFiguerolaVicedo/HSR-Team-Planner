@@ -113,3 +113,15 @@ export const sortLightconesFor = (lightcones, path) =>
     Number(b.path === path) - Number(a.path === path) ||
     b.rarity - a.rarity ||
     a.name.localeCompare(b.name));
+
+/**
+ * Slots for a recommended team ({ members, eidolons } from POST /recommendations).
+ * Characters already in the draft keep their light cone, superimposition and SPD.
+ */
+export const slotsFromRecommendation = (team, draft) => {
+  const current = Object.fromEntries(filledSlots(draft).map((slot) => [slot.characterId, slot]));
+  const slots = team.members.slice(0, TEAM_SIZE).map((char, i) =>
+    current[char.id] ?? newSlot(char.id, team.eidolons?.[i] ?? 0));
+  while (slots.length < TEAM_SIZE) slots.push(null);
+  return slots;
+};

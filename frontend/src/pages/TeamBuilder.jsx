@@ -10,12 +10,13 @@ import { useTeamSuggestions } from "../hooks/useTeamSuggestions";
 import { getTeamSpd, validateTeam } from "../services/plannerService";
 import CharacterPicker from "../components/team/CharacterPicker";
 import LightconePicker from "../components/team/LightconePicker";
+import RecommendationsPanel from "../components/team/RecommendationsPanel";
 import SaveTeam from "../components/team/SaveTeam";
 import TeamSlot from "../components/team/TeamSlot";
 import ValidationPanel from "../components/team/ValidationPanel";
 import LoadError from "../components/LoadError";
 import SkeletonLoader from "../components/SkeletonLoader";
-import { filledSlots, toTeamRequest } from "../util/team";
+import { filledSlots, slotsFromRecommendation, toTeamRequest } from "../util/team";
 
 // Module-level so useDebouncedQuery gets the same function every render
 const fetchSpd = ({ speeds }) => getTeamSpd(speeds);
@@ -30,7 +31,7 @@ const TeamBuilder = () => {
   const { characters, loading, error } = useCharacters();
   const { lightcones } = useLightcones();
   const { owned, eidolon } = useRoster();
-  const { draft, setField, updateSlot, placeCharacter, clearSlot, reset } = useTeamDraft();
+  const { draft, setField, updateSlot, placeCharacter, clearSlot, setSlots, reset } = useTeamDraft();
   const [picker, setPicker] = useState(null); // { type: "character" | "lightcone", position }
 
   const charactersById = useMemo(() => byId(characters), [characters]);
@@ -87,6 +88,14 @@ const TeamBuilder = () => {
           Tip: mark the characters you have in <Link to="/roster" className="text-accent-cyan underline underline-offset-2">My characters</Link> and the builder will suggest from them first.
         </p>
       )}
+
+      <RecommendationsPanel
+        owned={owned}
+        gameMode={draft.gameMode}
+        onGameModeChange={(mode) => setField("gameMode", mode)}
+        memberIds={memberIds}
+        onUse={(team) => setSlots(slotsFromRecommendation(team, draft))}
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-5 gap-y-8 pt-3 mb-8">
         {draft.slots.map((slot, position) => (

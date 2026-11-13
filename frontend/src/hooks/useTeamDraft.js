@@ -49,7 +49,10 @@ export const useTeamDraft = () => {
     return { ...d, slots };
   }), []);
 
+  /** Replaces the 4 slots at once (a recommended team), keeping name, mode and notes. */
+  const setSlots = useCallback((slots) => setDraft((d) => ({ ...d, slots })), []);
+
   const reset = useCallback(() => setDraft(emptyDraft()), []);
 
-  return { draft, setField, updateSlot, placeCharacter, clearSlot, reset };
+  return { draft, setField, updateSlot, placeCharacter, clearSlot, setSlots, reset };
 };

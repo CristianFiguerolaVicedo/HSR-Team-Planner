@@ -35,7 +35,7 @@ public class TeamService {
     private final TeamRepository teams;
     private final CharacterRepository characters;
     private final LightConeRepository lightCones;
-    private final SynergyRepository synergies;
+    private final SynergyLookups synergyLookups;
     private final ShareCodeGenerator shareCodes;
     private final Clock clock;
 
@@ -46,14 +46,14 @@ public class TeamService {
     @Transactional(readOnly = true)
     public TeamValidationResult validate(TeamRequest request) {
         Resolved resolved = resolve(request);
-        return validator.validate(resolved.candidates(), synergyLookup(resolved.characters().keySet()));
+        return validator.validate(resolved.candidates(), synergyLookups.within(resolved.characters().keySet()));
     }
 
     @Transactional
     public TeamResponse create(TeamRequest request) {
         Resolved resolved = resolve(request);
         TeamValidationResult validation =
-                validator.validate(resolved.candidates(), synergyLookup(resolved.characters().keySet()));
+                validator.validate(resolved.candidates(), synergyLookups.within(resolved.characters().keySet()));
         if (!validation.valid()) {
             throw new InvalidTeamException(validation);
         }
@@ -91,7 +91,7 @@ public class TeamService {
                 .toList();
         Set<Integer> ids = candidates.stream().map(SlotCandidate::characterId).collect(Collectors.toSet());
         // Recomputed on read: synergies and roles may have improved since the team was saved
-        return toResponse(team, validator.validate(candidates, synergyLookup(ids)));
+        return toResponse(team, validator.validate(candidates, synergyLookups.within(ids)));
     }
 
     // --- helpers -------------------------------------------------------------------------------
@@ -127,19 +127,6 @@ public class TeamService {
     private static SlotCandidate candidate(int position, Character c, LightCone lc) {
         return new SlotCandidate(position, c.getId(), c.getName(), c.getPath(), List.copyOf(c.getRoles()), c.getVariantGroup(),
                 lc == null ? null : lc.getName(), lc == null ? null : lc.getPath());
-    }
-
-    /** Loads every synergy inside the team in one query; CURATED and BUILD_GUIDE scores add up. */
-    private SynergyLookup synergyLookup(Collection<Integer> characterIds) {
-        Map<Long, Integer> scores = new HashMap<>();
-        for (Synergy s : synergies.findAllWithin(characterIds)) {
-            scores.merge(pairKey(s.getCharacterA().getId(), s.getCharacterB().getId()), s.getScore(), Integer::sum);
-        }
-        return (a, b) -> scores.getOrDefault(pairKey(a, b), 0);
-    }
-
-    private static long pairKey(int a, int b) {
-        return ((long) Math.min(a, b) << 32) | Math.max(a, b);
     }
 
     private String uniqueShareCode() {

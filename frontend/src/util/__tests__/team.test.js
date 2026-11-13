@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  draftFromTeam, emptyDraft, newSlot, pickBlocker, sortLightconesFor, suggestPartners, toTeamRequest,
+  draftFromTeam, emptyDraft, newSlot, pickBlocker, slotsFromRecommendation, sortLightconesFor, suggestPartners, toTeamRequest,
 } from "../team.js";
 
 const byId = {
@@ -81,4 +81,17 @@ test("light cones of the character's path come first", () => {
     { id: 4, name: "A", rarity: 4, path: "HUNT" },
   ];
   assert.deepEqual(sortLightconesFor(list, "HUNT").map((lc) => lc.id), [3, 4, 1, 2]);
+});
+
+test("a recommendation fills the slots and keeps builds already in the draft", () => {
+  const draft = emptyDraft();
+  draft.slots[2] = { ...newSlot(1306, 1), lightConeId: 7, superimposition: 2, spd: 160 };
+  const team = { members: [{ id: 1102 }, { id: 1306 }, { id: 1106 }, { id: 1208 }], eidolons: [2, 0, 6, 0] };
+
+  const slots = slotsFromRecommendation(team, draft);
+
+  assert.deepEqual(slots[0], newSlot(1102, 2));
+  assert.deepEqual(slots[1], { characterId: 1306, eidolon: 1, lightConeId: 7, superimposition: 2, spd: 160 });
+  assert.deepEqual(slots[2], newSlot(1106, 6));
+  assert.equal(slots.length, 4);
 });

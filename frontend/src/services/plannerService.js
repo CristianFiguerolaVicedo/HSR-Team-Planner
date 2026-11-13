@@ -18,3 +18,6 @@ export const validateTeam = (team) => postJson("/teams/validate", team);
 export const createTeam = (team) => postJson("/teams", team);
 
 export const getTeam = (shareCode) => fetchJson(`/teams/${encodeURIComponent(shareCode)}`);
+
+/** body: { owned: { [id]: eidolon }, gameMode, mustInclude: [ids], limit } */
+export const getRecommendations = (body) => postJson("/recommendations", body);

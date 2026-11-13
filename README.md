@@ -8,7 +8,7 @@
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
 
-> Status: **MVP complete**. Catalog, "My characters", team builder with live validation, SPD calculator and share links. Next: phase 2 (UID import, login, recommender).
+> Status: **MVP complete, phase 2 in progress**. Done: catalog, "My characters", team builder with live validation, SPD calculator, share links and a rule-based team recommender. Next: import by UID, Discord/Google login, deployment.
 
 ## What it does
 
@@ -31,6 +31,7 @@ HSR-Team-Planner/
 │   │   ├── team/                    Team, TeamSlot, share codes, endpoints
 │   │   │   └── validation/          Team rules (pure Java, no Spring)
 │   │   ├── spd/                     SPD calculator (pure Java) + endpoint
+│   │   ├── recommend/               Rule-based team recommender (pure Java) + endpoint
 │   │   ├── config/                  Properties, CORS, clock, scheduling
 │   │   └── common/                  Error handling (RFC 9457 problem details)
 │   ├── src/main/resources/
@@ -82,6 +83,7 @@ All endpoints are under `/api`. Errors are `application/problem+json`.
 | POST | `/teams/validate` | Check a team without saving it (roles, synergies, issues) |
 | POST | `/teams` | Save a team → `201` with its `shareCode`; `422` if it breaks a rule |
 | GET | `/teams/{shareCode}` | A shared team, with SPD analysis per slot |
+| POST | `/recommendations` | Best teams from your characters: `{"owned": {"1102": 2, ...}, "gameMode": "PURE_FICTION", "mustInclude": [1102]}` |
 | POST | `/admin/sync` | Re-sync the catalog now (header `X-Admin-Token`) |
 
 Team issues have a severity: `ERROR` (the game forbids it: duplicates, more than 4, two Trailblazers), `WARNING` (light cone of another Path, no sustain, no damage dealer) and `INFO` (two or more sustains).
@@ -91,6 +93,12 @@ Team issues have a severity: `ERROR` (the game forbids it: duplicates, more than
 A unit acts every `10000 / SPD` action value (AV). Cycle 0 lasts 150 AV and every later cycle 100 AV, so by the end of cycle `n` a unit has acted `floor((150 + 100·n) · SPD / 10000)` times. The next breakpoint is the SPD that adds one more action: `(actions + 1) · 10000 / (150 + 100·n)`.
 
 That reproduces the usual breakpoints: 133.34 SPD for 2 actions in cycle 0, 120 for 3 in two cycles, 160 for 4 in two cycles, 142.86 / 171.43 for 5 / 6 in three cycles. Action advance and delay are not modelled yet.
+
+## Team recommender
+
+`TeamRecommender` (pure Java, JUnit-tested) builds teams only from the characters you own. Trying every 4-character combination would be millions of teams, so each damage dealer you own is an anchor and only its best candidates are combined: its 12 partners with the most synergy plus the best sustains and supports. That's a few hundred teams per anchor (about 60 ms for the whole catalog), and the best team of each anchor is kept so results show different cores.
+
+Score = **synergy** (pairs recommended together in HSRWiki's guides) + **roles** (one sustain +4, none −6, up to two supports +2 each) + **game mode** (two damage dealers +3 in Pure Fiction / Apocalyptic Shadow; one DPS with two supports +3 in Memory of Chaos / Anomaly Arbitration) + **Eidolons** (+0.5 each). Every team comes with the reasons behind its score.
 
 ## Catalog sync
 
