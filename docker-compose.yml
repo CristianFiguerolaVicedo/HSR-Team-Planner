@@ -2,6 +2,8 @@
 services:
   postgres:
     image: postgres:17
+    # Starts again with Docker after a reboot, until you run "docker compose down"
+    restart: unless-stopped
     environment:
       POSTGRES_DB: hsrplanner
       POSTGRES_USER: hsrplanner
