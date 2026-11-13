@@ -1,4 +1,4 @@
-import { fetchJson, postJson } from "./apiClient";
+import { fetchJson, getOnce, postJson } from "./apiClient";
 
 // One function per backend endpoint (see README → API)
 
@@ -21,3 +21,6 @@ export const getTeam = (shareCode) => fetchJson(`/teams/${encodeURIComponent(sha
 
 /** body: { owned: { [id]: eidolon }, gameMode, mustInclude: [ids], limit } */
 export const getRecommendations = (body) => postJson("/recommendations", body);
+
+/** Characters in a player's in-game showcase (Enka.Network, Mihomo as fallback). Not retried. */
+export const importFromUid = (uid) => getOnce(`/import/${encodeURIComponent(uid)}`);

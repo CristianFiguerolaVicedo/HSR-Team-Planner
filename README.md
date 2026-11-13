@@ -8,7 +8,7 @@
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
 
-> Status: **MVP complete, phase 2 in progress**. Done: catalog, "My characters", team builder with live validation, SPD calculator, share links and a rule-based team recommender. Next: import by UID, Discord/Google login, deployment.
+> Status: **MVP complete, phase 2 in progress**. Done: catalog, "My characters", team builder with live validation, SPD calculator, share links and a rule-based team recommender, import by UID. Next: Discord/Google login, deployment.
 
 ## What it does
 
@@ -32,6 +32,7 @@ HSR-Team-Planner/
 │   │   │   └── validation/          Team rules (pure Java, no Spring)
 │   │   ├── spd/                     SPD calculator (pure Java) + endpoint
 │   │   ├── recommend/               Rule-based team recommender (pure Java) + endpoint
+│   │   ├── importer/                Import by UID from Enka.Network / Mihomo
 │   │   ├── config/                  Properties, CORS, clock, scheduling
 │   │   └── common/                  Error handling (RFC 9457 problem details)
 │   ├── src/main/resources/
@@ -84,6 +85,7 @@ All endpoints are under `/api`. Errors are `application/problem+json`.
 | POST | `/teams` | Save a team → `201` with its `shareCode`; `422` if it breaks a rule |
 | GET | `/teams/{shareCode}` | A shared team, with SPD analysis per slot |
 | POST | `/recommendations` | Best teams from your characters: `{"owned": {"1102": 2, ...}, "gameMode": "PURE_FICTION", "mustInclude": [1102]}` |
+| GET | `/import/{uid}` | Characters and Eidolons in a player's in-game showcase (Enka.Network, Mihomo as fallback) |
 | POST | `/admin/sync` | Re-sync the catalog now (header `X-Admin-Token`) |
 
 Team issues have a severity: `ERROR` (the game forbids it: duplicates, more than 4, two Trailblazers), `WARNING` (light cone of another Path, no sustain, no damage dealer) and `INFO` (two or more sustains).
@@ -99,6 +101,10 @@ That reproduces the usual breakpoints: 133.34 SPD for 2 actions in cycle 0, 120 
 `TeamRecommender` (pure Java, JUnit-tested) builds teams only from the characters you own. Trying every 4-character combination would be millions of teams, so each damage dealer you own is an anchor and only its best candidates are combined: its 12 partners with the most synergy plus the best sustains and supports. That's a few hundred teams per anchor (about 60 ms for the whole catalog), and the best team of each anchor is kept so results show different cores.
 
 Score = **synergy** (pairs recommended together in HSRWiki's guides) + **roles** (one sustain +4, none −6, up to two supports +2 each) + **game mode** (two damage dealers +3 in Pure Fiction / Apocalyptic Shadow; one DPS with two supports +3 in Memory of Chaos / Anomaly Arbitration; by tags: +2 per AoE damage dealer in Pure Fiction, +2 per Break character in Apocalyptic Shadow, up to two each, and +1 for a single-target carry in Apocalyptic Shadow / Memory of Chaos) + **Eidolons** (+0.5 each). Every team comes with the reasons behind its score.
+
+## Import by UID
+
+`GET /api/import/{uid}` reads the player's **in-game profile showcase** (only those characters, plus the support character, are public) from [Enka.Network](https://enka.network) and falls back to [Mihomo](https://api.mihomo.me) if Enka doesn't answer. Following Enka's rules, requests carry a custom User-Agent and each UID is cached for the `ttl` Enka returns (1–10 minutes). Their documented errors become clear messages: invalid UID (400), unknown player (404), game maintenance (503), too many requests (429). Nothing is stored: the frontend shows what would change and merges it into "My characters" when the user confirms.
 
 ## Catalog sync
 
@@ -135,6 +141,7 @@ npm run lint
 | `HSRWIKI_BASE_URL` | `https://hsrwiki-backend.onrender.com` | Where the catalog comes from |
 | `SYNC_ON_STARTUP` | `if-empty` | `always`, `if-empty` or `never` |
 | `SYNC_CRON` | `0 0 19 * * WED` | Weekly sync (UTC) |
+| `ENKA_URL` / `MIHOMO_URL` | `https://enka.network` / `https://api.mihomo.me` | UID import providers |
 | `ADMIN_TOKEN` | empty (admin disabled) | Token for `POST /api/admin/sync` |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:5173,http://localhost:4173` | Frontend origins |
 | `VITE_API_BASE_URL` (frontend) | `http://localhost:8080/api` in dev | API used by the site |

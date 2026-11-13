@@ -38,7 +38,7 @@ const subscribe = (fn) => {
 
 const update = (changes) => write(applyRosterChanges(read(), changes));
 
-/** useRoster() -> { owned, has(id), eidolon(id), set(id, e), remove(id), toggle(id), setMany(ids, bool), clear() } */
+/** useRoster() -> { owned, has(id), eidolon(id), set(id, e), remove(id), toggle(id), setMany(ids, bool), merge(changes), clear() } */
 export const useRoster = () => {
   const owned = useSyncExternalStore(subscribe, read, () => EMPTY);
   const has = useCallback((id) => String(id) in owned, [owned]);
@@ -51,6 +51,8 @@ export const useRoster = () => {
     // Adding keeps the eidolon of characters already on the list
     update(Object.fromEntries(ids.map((id) => [id, value ? (current[String(id)] ?? 0) : null])));
   }, []);
+  /** Writes several Eidolons at once ({ [id]: eidolon }), e.g. an import from UID. */
+  const merge = useCallback((changes) => update(changes), []);
   const clear = useCallback(() => write({}), []);
-  return { owned, has, eidolon, set, remove, toggle, setMany, clear };
+  return { owned, has, eidolon, set, remove, toggle, setMany, merge, clear };
 };

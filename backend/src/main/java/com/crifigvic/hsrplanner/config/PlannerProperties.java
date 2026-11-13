@@ -7,7 +7,7 @@ import java.util.List;
 
 /** Everything under {@code planner.*} in application.yml. */
 @ConfigurationProperties(prefix = "planner")
-public record PlannerProperties(Cors cors, HsrWiki hsrwiki, Sync sync, Admin admin) {
+public record PlannerProperties(Cors cors, HsrWiki hsrwiki, Sync sync, Admin admin, Importer importer) {
 
     public record Cors(List<String> allowedOrigins) {
     }
@@ -22,6 +22,10 @@ public record PlannerProperties(Cors cors, HsrWiki hsrwiki, Sync sync, Admin adm
 
     /** @param token required in the X-Admin-Token header; blank disables the admin endpoints */
     public record Admin(String token) {
+    }
+
+    /** Import by UID: Enka.Network first, Mihomo as fallback. */
+    public record Importer(String enkaUrl, String mihomoUrl, Duration timeout) {
     }
 
     public enum OnStartup {ALWAYS, IF_EMPTY, NEVER}

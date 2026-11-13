@@ -5,6 +5,7 @@ import { useRoster } from "../hooks/useRoster";
 import CharacterCard from "../components/CharacterCard";
 import CharacterFilters from "../components/CharacterFilters";
 import EmptyResult from "../components/EmptyResult";
+import ImportFromUid from "../components/ImportFromUid";
 import LoadError from "../components/LoadError";
 import SkeletonLoader from "../components/SkeletonLoader";
 import { EMPTY_FILTERS, activeFilterCount, filterCharacters } from "../util/filters";
@@ -41,6 +42,8 @@ const Roster = () => {
           tap everyone you have; the team builder will only use them
         </p>
       </div>
+
+      <ImportFromUid />
 
       <div className="glass-panel p-4 mb-4 flex flex-wrap items-center gap-4">
         <div className="flex-1 min-w-56">

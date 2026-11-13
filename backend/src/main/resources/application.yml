@@ -29,3 +29,7 @@ planner:
     cron: ${SYNC_CRON:0 0 19 * * WED}
   admin:
     token: ${ADMIN_TOKEN:}   # blank = POST /api/admin/sync disabled
+  importer:
+    enka-url: ${ENKA_URL:https://enka.network}
+    mihomo-url: ${MIHOMO_URL:https://api.mihomo.me}
+    timeout: 15s

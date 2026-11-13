@@ -1,5 +1,6 @@
 package com.crifigvic.hsrplanner.common;
 
+import com.crifigvic.hsrplanner.importer.ImportException;
 import com.crifigvic.hsrplanner.team.InvalidTeamException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -26,6 +27,21 @@ public class ApiExceptionHandler {
     ProblemDetail invalidTeam(InvalidTeamException e) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(422), e.getMessage());
         problem.setProperty("validation", e.getValidation());
+        return problem;
+    }
+
+    /** Import by UID: the reason decides the status, the message is meant for the player. */
+    @ExceptionHandler(ImportException.class)
+    ProblemDetail importFailed(ImportException e) {
+        HttpStatus status = switch (e.getReason()) {
+            case INVALID_UID -> HttpStatus.BAD_REQUEST;
+            case NOT_FOUND -> HttpStatus.NOT_FOUND;
+            case MAINTENANCE -> HttpStatus.SERVICE_UNAVAILABLE;
+            case RATE_LIMITED -> HttpStatus.TOO_MANY_REQUESTS;
+            case UNAVAILABLE -> HttpStatus.BAD_GATEWAY;
+        };
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, e.getMessage());
+        problem.setProperty("reason", e.getReason());
         return problem;
     }
 

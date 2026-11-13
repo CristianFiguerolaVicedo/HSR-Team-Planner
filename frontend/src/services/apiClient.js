@@ -90,4 +90,18 @@ export const postJson = async (url, body) => {
   }
 };
 
+/**
+ * GET without retries, for endpoints whose 502/503 mean "the answer is no" rather than
+ * "the server is waking up" (e.g. the UID import: game maintenance, Enka down).
+ */
+export const getOnce = async (url) => {
+  started();
+  try {
+    const response = await apiClient.get(url);
+    return response.data;
+  } finally {
+    finished();
+  }
+};
+
 export default apiClient;
