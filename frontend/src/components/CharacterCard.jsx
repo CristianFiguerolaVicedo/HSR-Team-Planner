@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Star } from "lucide-react";
-import { ELEMENT, PATH, ROLE, tapeClass, tiltFor } from "../util/game";
+import { ELEMENT, PATH, roleLabel, tapeClass, tiltFor } from "../util/game";
 
 /**
  * Instant photo with washi tape, like HSRWiki's CharInfoCard.
@@ -53,7 +53,7 @@ const CharacterCard = ({ char, eidolon, onClick, mode = "open", dimWhenMissing =
           {element && <img src={element.icon} alt="" className="w-5 h-5" title={element.label} />}
           {path && <img src={path.icon} alt="" className="w-5 h-5 invert opacity-70" title={path.label} />}
           <span className="font-hand text-xl leading-[0.95] ml-0.5 min-w-0 break-words">
-            {ROLE[char.role]?.label ?? char.role}
+            {roleLabel(char)}
           </span>
         </div>
       </div>

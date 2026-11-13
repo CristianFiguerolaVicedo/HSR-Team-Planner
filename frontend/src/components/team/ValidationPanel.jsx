@@ -45,7 +45,7 @@ const ValidationPanel = ({ validation, loading = false, error = null, empty = fa
 
           <div>
             <h3 className="text-sm font-semibold text-text-primary mb-2">Roles</h3>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
               {ROLES.map((role) => (
                 <div key={role.name} className="rounded-lg bg-bg-secondary px-2 py-1.5 text-center">
                   <div className="text-xl font-extrabold tabular-nums text-text-primary">{validation.roles?.[role.name] ?? 0}</div>

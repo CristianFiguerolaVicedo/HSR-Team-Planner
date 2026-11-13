@@ -27,7 +27,7 @@ public class CatalogService {
         return characters.findAllByOrderByNameAsc().stream()
                 .filter(c -> path == null || c.getPath() == path)
                 .filter(c -> element == null || c.getElement() == element)
-                .filter(c -> role == null || c.getRole() == role)
+                .filter(c -> role == null || c.getRoles().contains(role))
                 .filter(c -> rarity == null || c.getRarity() == rarity)
                 .map(CharacterDto::from)
                 .toList();

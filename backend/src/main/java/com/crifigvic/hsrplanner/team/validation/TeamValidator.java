@@ -87,9 +87,9 @@ public class TeamValidator {
         for (Role role : Role.values()) {
             roles.put(role, 0L);
         }
-        slots.stream()
-                .collect(Collectors.groupingBy(SlotCandidate::role, Collectors.counting()))
-                .forEach(roles::put);
+        for (SlotCandidate slot : slots) {
+            slot.roles().stream().distinct().forEach(role -> roles.merge(role, 1L, Long::sum));
+        }
         return roles;
     }
 

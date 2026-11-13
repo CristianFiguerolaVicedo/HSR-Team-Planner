@@ -43,3 +43,10 @@ test("toggleIn adds and removes", () => {
   assert.deepEqual(toggleIn(["ICE"], "FIRE"), ["ICE", "FIRE"]);
   assert.deepEqual(toggleIn(["ICE", "FIRE"], "ICE"), ["FIRE"]);
 });
+
+test("a character with several roles matches any of them", () => {
+  const ashveil = { id: 1999, name: "Ashveil", element: "LIGHTNING", path: "HUNT", role: "SUB_DPS", roles: ["SUB_DPS", "DEBUFFER"], rarity: 5 };
+  const list = [...all, ashveil];
+  assert.deepEqual(names(filterCharacters(list, { ...EMPTY_FILTERS, roles: ["DEBUFFER"] }, {})), ["Ashveil"]);
+  assert.deepEqual(names(filterCharacters(list, { ...EMPTY_FILTERS, roles: ["SUB_DPS"] }, {})), ["Ashveil"]);
+});

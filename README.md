@@ -60,7 +60,7 @@ LightCone
 
 | Entity | Key fields | Notes |
 |---|---|---|
-| `Character` | `id` (game id), `name`, `rarity`, `element`, `path`, `role`, `baseSpd`, `variantGroup` | `role` = default from the Path + overrides. `variantGroup` stops two versions of one character in the same team (all Trailblazers). |
+| `Character` | `id` (game id), `name`, `rarity`, `element`, `path`, `roles`, `baseSpd`, `variantGroup` | `roles` = Main DPS, Sub-DPS, Amplifier, Debuffer, Sustain; main role first, some characters have two. `variantGroup` stops two versions of one character in the same team (all Trailblazers). |
 | `LightCone` | `id`, `name` (unique), `rarity`, `path`, `hsrwikiId` | Matched by name: HSRWiki builds light cone ids from a name hash. |
 | `Synergy` | `characterA`, `characterB`, `score`, `source`, `reason` | One row per pair with `A.id < B.id`. `BUILD_GUIDE` rows are rebuilt on every sync; `CURATED` rows are never touched. |
 | `Team` | `shareCode` (8 chars, unique), `name`, `gameMode`, `notes`, `createdAt` | Immutable snapshot (no login yet): editing creates a new team. |
@@ -100,7 +100,7 @@ That reproduces the usual breakpoints: 133.34 SPD for 2 actions in cycle 0, 120 
 - every Wednesday at 19:00 UTC, an hour after HSRWiki refreshes its data (`SYNC_CRON`),
 - on demand with `POST /api/admin/sync`.
 
-Synergies come from HSRWiki's recommended teams: a fixed team member adds 2 to the pair, each option of an "A / B" slot adds 1, and placeholders like "Any Sustain" are skipped. `catalog/overrides.json` corrects roles that the Path gets wrong (Kafka is Nihility but a DPS), maps short names used by the guides ("Topaz") and adds variant groups.
+Synergies come from HSRWiki's recommended teams: a fixed team member adds 2 to the pair, each option of an "A / B" slot adds 1, and placeholders like "Any Sustain" are skipped. `catalog/overrides.json` holds the roles of every character, reviewed by hand (new characters get a default from their Path until they're added), maps short names used by the guides ("Topaz") and adds variant groups.
 
 ## Running locally
 

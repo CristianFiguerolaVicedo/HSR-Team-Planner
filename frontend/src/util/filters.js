@@ -1,3 +1,5 @@
+import { rolesOf } from "./game.js";
+
 export const EMPTY_FILTERS = {
   search: "",
   elements: [],
@@ -23,7 +25,7 @@ export const filterCharacters = (characters, filters, owned) => {
     if (query && !normalize(char.name).includes(query)) return false;
     if (filters.elements.length > 0 && !filters.elements.includes(char.element)) return false;
     if (filters.paths.length > 0 && !filters.paths.includes(char.path)) return false;
-    if (filters.roles.length > 0 && !filters.roles.includes(char.role)) return false;
+    if (filters.roles.length > 0 && !rolesOf(char).some((r) => filters.roles.includes(r))) return false;
     if (filters.rarities.length > 0 && !filters.rarities.includes(char.rarity)) return false;
     return true;
   });

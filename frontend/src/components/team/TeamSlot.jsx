@@ -1,5 +1,5 @@
 import { AlertTriangle, Gauge, Plus, RefreshCw, Star, X, XCircle } from "lucide-react";
-import { ELEMENT, PATH, ROLE, tapeClass, tiltFor } from "../../util/game";
+import { ELEMENT, PATH, roleLabel, tapeClass, tiltFor } from "../../util/game";
 import { actionsLabel, formatBreakpoint, formatMissing } from "../../util/spd";
 
 const selectClass = "w-full px-2 py-1.5 rounded-lg border border-border bg-bg-primary text-sm focus:outline-none focus:border-accent-cyan disabled:opacity-50";
@@ -58,7 +58,7 @@ const TeamSlot = ({
           <div className="mt-1 flex items-center gap-1.5 text-text-secondary">
             {element && <img src={element.icon} alt="" className="w-5 h-5" title={element.label} />}
             {path && <img src={path.icon} alt="" className="w-5 h-5 invert opacity-70" title={path.label} />}
-            <span className="font-hand text-xl leading-none">{ROLE[char.role]?.label ?? char.role}</span>
+            <span className="font-hand text-xl leading-none">{roleLabel(char)}</span>
           </div>
         </div>
 

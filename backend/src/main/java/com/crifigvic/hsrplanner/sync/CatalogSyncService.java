@@ -84,7 +84,7 @@ public class CatalogSyncService {
                 log.warn("Alias '{}' points to unknown character '{}'", alias, target);
             }
         });
-        Map<Integer, Role> roleOverrides = resolveOverrides(overrides.roles(), names);
+        Map<Integer, List<Role>> roleOverrides = resolveOverrides(overrides.roles(), names);
         Map<Integer, String> groupOverrides = resolveOverrides(overrides.variantGroups(), names);
 
         Map<Integer, Character> saved = new LinkedHashMap<>();
@@ -101,7 +101,10 @@ public class CatalogSyncService {
             entity.setRarity(c.rarity());
             entity.setElement(element);
             entity.setPath(path);
-            entity.setRole(roleOverrides.getOrDefault(c.id(), Role.defaultFor(path)));
+            List<Role> roles = roleOverrides.getOrDefault(c.id(), List.of(Role.defaultFor(path)));
+            // Change the managed list in place: Hibernate tracks that collection
+            entity.getRoles().clear();
+            entity.getRoles().addAll(roles.stream().distinct().toList());
             entity.setBaseSpd(baseSpd(c.ascension()));
             entity.setVariantGroup(groupOverrides.getOrDefault(c.id(), CharacterNames.builtInVariantGroup(c.name())));
             entity.setIconUrl(c.icon());

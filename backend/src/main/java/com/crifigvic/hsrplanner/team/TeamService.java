@@ -125,7 +125,7 @@ public class TeamService {
     }
 
     private static SlotCandidate candidate(int position, Character c, LightCone lc) {
-        return new SlotCandidate(position, c.getId(), c.getName(), c.getPath(), c.getRole(), c.getVariantGroup(),
+        return new SlotCandidate(position, c.getId(), c.getName(), c.getPath(), List.copyOf(c.getRoles()), c.getVariantGroup(),
                 lc == null ? null : lc.getName(), lc == null ? null : lc.getPath());
     }
 

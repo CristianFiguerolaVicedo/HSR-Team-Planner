@@ -7,7 +7,7 @@ import java.util.Map;
 
 /**
  * @param valid          false when there's at least one ERROR issue
- * @param roles          how many slots fill each role
+ * @param roles          how many characters cover each role (one with two roles counts in both)
  * @param synergyPairs   pairs inside the team with a known synergy, best first
  * @param synergyScore   sum of every pair's score
  */

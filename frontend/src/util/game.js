@@ -26,6 +26,7 @@ export const ROLES = [
   { name: "MAIN_DPS", label: "Main DPS" },
   { name: "SUB_DPS", label: "Sub-DPS" },
   { name: "AMPLIFIER", label: "Amplifier" },
+  { name: "DEBUFFER", label: "Debuffer" },
   { name: "SUSTAIN", label: "Sustain" },
 ];
 
@@ -33,6 +34,12 @@ const byName = (list) => Object.fromEntries(list.map((item) => [item.name, item]
 export const ELEMENT = byName(ELEMENTS);
 export const PATH = byName(PATHS);
 export const ROLE = byName(ROLES);
+
+/** A character's roles (main first), falling back to the single `role` older API answers had. */
+export const rolesOf = (char) => (char.roles?.length ? char.roles : [char.role].filter(Boolean));
+
+/** "Sub-DPS / Debuffer" */
+export const roleLabel = (char) => rolesOf(char).map((r) => ROLE[r]?.label ?? r).join(" / ");
 
 /** Washi tape class from index.css, one colour per element (same as HSRWiki). */
 export const tapeClass = (element) => `tape-${element.toLowerCase()}`;

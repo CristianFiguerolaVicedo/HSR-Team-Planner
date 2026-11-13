@@ -3,7 +3,12 @@ package com.crifigvic.hsrplanner.catalog;
 import jakarta.persistence.*;
 import lombok.*;
 
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
+
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 /** A playable character, copied from HSRWiki by the sync. The id is the game's own id (e.g. 1005). */
 @Entity
@@ -11,8 +16,6 @@ import java.time.Instant;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Character {
 
     @Id
@@ -32,9 +35,22 @@ public class Character {
     @Column(nullable = false, length = 20)
     private Path path;
 
+    /**
+     * Roles in order, the first being the main one. SUBSELECT loads the roles of every character
+     * in the list with one extra query instead of one per character.
+     */
+    @ElementCollection
+    @CollectionTable(name = "character_roles", joinColumns = @JoinColumn(name = "character_id"))
+    @OrderColumn(name = "role_order")
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private Role role;
+    @Column(name = "role", nullable = false, length = 20)
+    @Fetch(FetchMode.SUBSELECT)
+    private List<Role> roles = new ArrayList<>();
+
+    /** Main role: the first one. */
+    public Role mainRole() {
+        return roles.isEmpty() ? Role.defaultFor(path) : roles.getFirst();
+    }
 
     /** Base SPD at max ascension, before light cone, relics and traces. */
     @Column(name = "base_spd", nullable = false)

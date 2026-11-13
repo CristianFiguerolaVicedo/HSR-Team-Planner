@@ -6,14 +6,16 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static com.crifigvic.hsrplanner.catalog.Role.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class TeamValidatorTest {
 
     private final TeamValidator validator = new TeamValidator();
 
-    private static SlotCandidate slot(int position, int id, String name, Path path, Role role) {
-        return new SlotCandidate(position, id, name, path, role, null, null, null);
+    private static SlotCandidate slot(int position, int id, String name, Path path, Role... roles) {
+        return new SlotCandidate(position, id, name, path, List.of(roles), null, null, null);
     }
 
     private static final SlotCandidate SEELE = slot(0, 1102, "Seele", Path.HUNT, Role.MAIN_DPS);
@@ -35,6 +37,20 @@ class TeamValidatorTest {
         assertEquals(2, result.roles().get(Role.AMPLIFIER).longValue());
         assertEquals(1, result.roles().get(Role.SUSTAIN).longValue());
         assertEquals(0, result.roles().get(Role.SUB_DPS).longValue());
+    }
+
+    @Test
+    void characterWithTwoRolesCountsInBoth() {
+        SlotCandidate ashveil = slot(0, 1999, "Ashveil", Path.HUNT, SUB_DPS, DEBUFFER);
+        SlotCandidate pela = slot(1, 1106, "Pela", Path.NIHILITY, DEBUFFER);
+        SlotCandidate sparkle = slot(2, 1306, "Sparkle", Path.HARMONY, AMPLIFIER);
+
+        TeamValidationResult result = validator.validate(List.of(ashveil, pela, sparkle, FU_XUAN), SynergyLookup.NONE);
+
+        assertEquals(1, result.roles().get(SUB_DPS).longValue());
+        assertEquals(2, result.roles().get(DEBUFFER).longValue());
+        assertEquals(0, result.roles().get(MAIN_DPS).longValue());
+        assertFalse(hasIssue(result, IssueCode.NO_DPS), "a Sub-DPS is enough to deal damage");
     }
 
     @Test
@@ -65,8 +81,8 @@ class TeamValidatorTest {
 
     @Test
     void twoVersionsOfTheSameCharacterIsAnError() {
-        SlotCandidate harmonyTb = new SlotCandidate(0, 8006, "Trailblazer (Harmony) · F", Path.HARMONY, Role.AMPLIFIER, "TRAILBLAZER", null, null);
-        SlotCandidate preservationTb = new SlotCandidate(1, 8004, "Trailblazer (Preservation) · F", Path.PRESERVATION, Role.SUSTAIN, "TRAILBLAZER", null, null);
+        SlotCandidate harmonyTb = new SlotCandidate(0, 8006, "Trailblazer (Harmony) · F", Path.HARMONY, List.of(AMPLIFIER), "TRAILBLAZER", null, null);
+        SlotCandidate preservationTb = new SlotCandidate(1, 8004, "Trailblazer (Preservation) · F", Path.PRESERVATION, List.of(SUSTAIN), "TRAILBLAZER", null, null);
 
         TeamValidationResult result = validator.validate(List.of(harmonyTb, preservationTb), SynergyLookup.NONE);
 
@@ -85,7 +101,7 @@ class TeamValidatorTest {
 
     @Test
     void lightConeOfAnotherPathIsOnlyAWarning() {
-        SlotCandidate seeleWithHarmonyCone = new SlotCandidate(0, 1102, "Seele", Path.HUNT, Role.MAIN_DPS, null,
+        SlotCandidate seeleWithHarmonyCone = new SlotCandidate(0, 1102, "Seele", Path.HUNT, List.of(MAIN_DPS), null,
                 "But the Battle Isn't Over", Path.HARMONY);
 
         TeamValidationResult result = validator.validate(List.of(seeleWithHarmonyCone, SPARKLE, SILVER_WOLF, FU_XUAN), SynergyLookup.NONE);
