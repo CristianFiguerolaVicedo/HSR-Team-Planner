@@ -8,7 +8,7 @@
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
 
-> Status: **in progress**. Backend done (domain, endpoints, tests); frontend has the catalog and "My characters". Team builder, SPD calculator and shared teams are next.
+> Status: **in progress**. Backend done (domain, endpoints, tests). Frontend: catalog, "My characters", team builder and shared teams are in; the standalone SPD calculator page is next.
 
 ## What it does
 
@@ -41,7 +41,7 @@ HSR-Team-Planner/
 │   └── src/
 │       ├── pages/                   One page per route (lazy-loaded)
 │       ├── components/              Cards, filters, character detail, layout
-│       ├── hooks/                   useCharacters, useRoster (localStorage store), useSynergies
+│       ├── hooks/                   Data (characters, light cones, teams), roster and draft stores, debounced checks
 │       ├── services/                axios client with retries + one function per endpoint
 │       └── util/                    Pure logic (filters, roster, game labels) + node --test tests
 └── docker-compose.yml               Local PostgreSQL
