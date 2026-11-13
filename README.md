@@ -8,7 +8,7 @@
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
 
-> Status: **in progress**. Backend done (domain, endpoints, tests). Frontend: catalog, "My characters", team builder and shared teams are in; the standalone SPD calculator page is next.
+> Status: **MVP complete**. Catalog, "My characters", team builder with live validation, SPD calculator and share links. Next: phase 2 (UID import, login, recommender).
 
 ## What it does
 
