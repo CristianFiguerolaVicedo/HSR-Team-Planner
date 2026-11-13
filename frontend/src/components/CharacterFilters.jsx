@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Check, Route, Search, Shield, Star, Zap } from "lucide-react";
-import { ELEMENTS, PATHS, ROLES } from "../util/game";
+import { Check, Flame, Route, Search, Shield, Star, Zap } from "lucide-react";
+import { ELEMENTS, PATHS, ROLES, TAGS } from "../util/game";
 import { EMPTY_FILTERS, activeFilterCount, toggleIn } from "../util/filters";
 
 // Same chip look as HSRWiki's CharFilters (highlighter yellow when active)
@@ -124,6 +124,19 @@ const CharacterFilters = ({ filters, onChange, ownedCount, total, shown }) => {
                   onClick={() => set({ roles: toggleIn(filters.roles, role.name) })}>
                   {active && <Check size={16} className="text-accent-cyan" />}
                   {role.label}
+                </button>
+              );
+            })}
+          </Section>
+
+          <Section icon={Flame} iconClass="text-accent-red" title="Damage">
+            {TAGS.map((tag) => {
+              const active = filters.tags.includes(tag.name);
+              return (
+                <button key={tag.name} type="button" aria-pressed={active} className={chipClass(active)}
+                  onClick={() => set({ tags: toggleIn(filters.tags, tag.name) })}>
+                  {active && <Check size={16} className="text-accent-cyan" />}
+                  {tag.label}
                 </button>
               );
             })}

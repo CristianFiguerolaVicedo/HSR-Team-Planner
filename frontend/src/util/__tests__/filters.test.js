@@ -50,3 +50,12 @@ test("a character with several roles matches any of them", () => {
   assert.deepEqual(names(filterCharacters(list, { ...EMPTY_FILTERS, roles: ["DEBUFFER"] }, {})), ["Ashveil"]);
   assert.deepEqual(names(filterCharacters(list, { ...EMPTY_FILTERS, roles: ["SUB_DPS"] }, {})), ["Ashveil"]);
 });
+
+test("damage tags filter with OR, and untagged characters drop out", () => {
+  const herta = { id: 1013, name: "Herta", element: "ICE", path: "ERUDITION", roles: ["MAIN_DPS"], tags: ["AOE"], rarity: 4 };
+  const firefly = { id: 1310, name: "Firefly", element: "FIRE", path: "DESTRUCTION", roles: ["MAIN_DPS"], tags: ["AOE", "BREAK"], rarity: 5 };
+  const list = [...all, herta, firefly];
+  assert.deepEqual(names(filterCharacters(list, { ...EMPTY_FILTERS, tags: ["BREAK"] }, {})), ["Firefly"]);
+  assert.deepEqual(names(filterCharacters(list, { ...EMPTY_FILTERS, tags: ["AOE"] }, {})), ["Herta", "Firefly"]);
+  assert.equal(activeFilterCount({ ...EMPTY_FILTERS, tags: ["AOE", "BREAK"] }), 2);
+});

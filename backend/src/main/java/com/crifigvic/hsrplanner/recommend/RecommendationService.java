@@ -35,7 +35,7 @@ public class RecommendationService {
 
         List<Candidate> candidates = found.values().stream()
                 .sorted(Comparator.comparingInt(Character::getId))
-                .map(c -> new Candidate(c.getId(), c.getName(), c.getRoles(), c.getVariantGroup(),
+                .map(c -> new Candidate(c.getId(), c.getName(), c.getRoles(), c.getTags(), c.getVariantGroup(),
                         Math.clamp(eidolons.getOrDefault(c.getId(), 0), 0, 6)))
                 .toList();
 

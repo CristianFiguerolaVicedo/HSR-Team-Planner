@@ -61,7 +61,7 @@ LightCone
 
 | Entity | Key fields | Notes |
 |---|---|---|
-| `Character` | `id` (game id), `name`, `rarity`, `element`, `path`, `roles`, `baseSpd`, `variantGroup` | `roles` = Main DPS, Sub-DPS, Amplifier, Debuffer, Sustain; main role first, some characters have two. `variantGroup` stops two versions of one character in the same team (all Trailblazers). |
+| `Character` | `id` (game id), `name`, `rarity`, `element`, `path`, `roles`, `baseSpd`, `variantGroup` | `roles` = Main DPS, Sub-DPS, Amplifier, Debuffer, Sustain; main role first, some characters have two. `tags` = damage profile (AoE, Single target, Break). `variantGroup` stops two versions of one character in the same team (all Trailblazers). |
 | `LightCone` | `id`, `name` (unique), `rarity`, `path`, `hsrwikiId` | Matched by name: HSRWiki builds light cone ids from a name hash. |
 | `Synergy` | `characterA`, `characterB`, `score`, `source`, `reason` | One row per pair with `A.id < B.id`. `BUILD_GUIDE` rows are rebuilt on every sync; `CURATED` rows are never touched. |
 | `Team` | `shareCode` (8 chars, unique), `name`, `gameMode`, `notes`, `createdAt` | Immutable snapshot (no login yet): editing creates a new team. |
@@ -98,7 +98,7 @@ That reproduces the usual breakpoints: 133.34 SPD for 2 actions in cycle 0, 120 
 
 `TeamRecommender` (pure Java, JUnit-tested) builds teams only from the characters you own. Trying every 4-character combination would be millions of teams, so each damage dealer you own is an anchor and only its best candidates are combined: its 12 partners with the most synergy plus the best sustains and supports. That's a few hundred teams per anchor (about 60 ms for the whole catalog), and the best team of each anchor is kept so results show different cores.
 
-Score = **synergy** (pairs recommended together in HSRWiki's guides) + **roles** (one sustain +4, none −6, up to two supports +2 each) + **game mode** (two damage dealers +3 in Pure Fiction / Apocalyptic Shadow; one DPS with two supports +3 in Memory of Chaos / Anomaly Arbitration) + **Eidolons** (+0.5 each). Every team comes with the reasons behind its score.
+Score = **synergy** (pairs recommended together in HSRWiki's guides) + **roles** (one sustain +4, none −6, up to two supports +2 each) + **game mode** (two damage dealers +3 in Pure Fiction / Apocalyptic Shadow; one DPS with two supports +3 in Memory of Chaos / Anomaly Arbitration; by tags: +2 per AoE damage dealer in Pure Fiction, +2 per Break character in Apocalyptic Shadow, up to two each, and +1 for a single-target carry in Apocalyptic Shadow / Memory of Chaos) + **Eidolons** (+0.5 each). Every team comes with the reasons behind its score.
 
 ## Catalog sync
 
@@ -108,7 +108,7 @@ Score = **synergy** (pairs recommended together in HSRWiki's guides) + **roles**
 - every Wednesday at 19:00 UTC, an hour after HSRWiki refreshes its data (`SYNC_CRON`),
 - on demand with `POST /api/admin/sync`.
 
-Synergies come from HSRWiki's recommended teams: a fixed team member adds 2 to the pair, each option of an "A / B" slot adds 1, and placeholders like "Any Sustain" are skipped. `catalog/overrides.json` holds the roles of every character, reviewed by hand (new characters get a default from their Path until they're added), maps short names used by the guides ("Topaz") and adds variant groups.
+Synergies come from HSRWiki's recommended teams: a fixed team member adds 2 to the pair, each option of an "A / B" slot adds 1, and placeholders like "Any Sustain" are skipped. `catalog/overrides.json` holds the roles of every character and the damage tags of damage dealers and break supports, reviewed by hand (new characters get a default from their Path until they're added), maps short names used by the guides ("Topaz") and adds variant groups.
 
 ## Running locally
 

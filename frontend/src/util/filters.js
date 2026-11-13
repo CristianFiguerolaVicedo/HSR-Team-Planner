@@ -6,6 +6,7 @@ export const EMPTY_FILTERS = {
   paths: [],
   roles: [],
   rarities: [],
+  tags: [],
   ownership: "all", // "all" | "owned" | "missing"
 };
 
@@ -27,12 +28,13 @@ export const filterCharacters = (characters, filters, owned) => {
     if (filters.paths.length > 0 && !filters.paths.includes(char.path)) return false;
     if (filters.roles.length > 0 && !rolesOf(char).some((r) => filters.roles.includes(r))) return false;
     if (filters.rarities.length > 0 && !filters.rarities.includes(char.rarity)) return false;
+    if (filters.tags?.length > 0 && !(char.tags ?? []).some((t) => filters.tags.includes(t))) return false;
     return true;
   });
 };
 
 export const activeFilterCount = (filters) =>
-  filters.elements.length + filters.paths.length + filters.roles.length + filters.rarities.length +
+  filters.elements.length + filters.paths.length + filters.roles.length + filters.rarities.length + (filters.tags?.length ?? 0) +
   (filters.search.trim() ? 1 : 0) + (filters.ownership !== "all" ? 1 : 0);
 
 /** Adds the value if missing, removes it if present. */

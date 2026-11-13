@@ -1,6 +1,7 @@
 package com.crifigvic.hsrplanner.recommend;
 
 import com.crifigvic.hsrplanner.catalog.Role;
+import com.crifigvic.hsrplanner.catalog.Tag;
 import com.crifigvic.hsrplanner.recommend.TeamRecommender.Candidate;
 import com.crifigvic.hsrplanner.recommend.TeamRecommender.Recommendation;
 import com.crifigvic.hsrplanner.team.GameMode;
@@ -155,5 +156,53 @@ class TeamRecommenderTest {
         List<Recommendation> first = recommender.recommend(owned, SynergyLookup.NONE, null, List.of(), 5);
         List<Recommendation> second = recommender.recommend(new ArrayList<>(owned.reversed()), SynergyLookup.NONE, null, List.of(), 5);
         assertEquals(first.stream().map(Recommendation::memberIds).toList(), second.stream().map(Recommendation::memberIds).toList());
+    }
+
+    // --- damage profile tags ---------------------------------------------------------------------
+
+    private static Candidate tagged(int id, String name, Role role, Tag... tags) {
+        return new Candidate(id, name, List.of(role), Set.of(tags), null, 0);
+    }
+
+    @Test
+    void pureFictionPrefersAoeDamageDealers() {
+        Candidate aoeDps = tagged(20, "Herta", MAIN_DPS, Tag.AOE);
+        Candidate stDps = tagged(21, "Seele", MAIN_DPS, Tag.SINGLE_TARGET);
+        List<Candidate> owned = List.of(aoeDps, stDps, SPARKLE, PELA, FU_XUAN);
+
+        Recommendation best = recommender.recommend(owned, SynergyLookup.NONE, GameMode.PURE_FICTION, List.of(), 5).getFirst();
+
+        assertTrue(best.memberIds().contains(20), "AoE carry first in Pure Fiction: " + best.memberIds());
+        assertTrue(best.reasons().stream().anyMatch(r -> r.contains("hit many enemies")));
+    }
+
+    @Test
+    void apocalypticShadowRewardsBreakAndASingleTargetCarry() {
+        Candidate boothill = tagged(30, "Boothill", MAIN_DPS, Tag.SINGLE_TARGET, Tag.BREAK);
+        Candidate ruanMei = tagged(31, "Ruan Mei", AMPLIFIER, Tag.BREAK);
+        Candidate gallagher = tagged(32, "Gallagher", SUSTAIN, Tag.BREAK);
+        List<Candidate> owned = List.of(boothill, ruanMei, gallagher, SPARKLE, PELA, FU_XUAN);
+
+        Recommendation best = recommender.recommend(owned, SynergyLookup.NONE, GameMode.APOCALYPTIC_SHADOW, List.of(30), 1).getFirst();
+
+        assertTrue(ids(best).containsAll(Set.of(30, 31, 32)), "break core: " + best.memberIds());
+        // break counts twice at most, plus the single-target carry
+        assertEquals(TeamRecommender.BREAK_BONUS * 2 + TeamRecommender.SINGLE_TARGET_BONUS,
+                best.breakdown().mode() - modeShapeBonus(best), 1e-9);
+    }
+
+    @Test
+    void tagsDontMatterWithoutAGameMode() {
+        Candidate aoeDps = tagged(20, "Herta", MAIN_DPS, Tag.AOE);
+        List<Candidate> owned = List.of(aoeDps, SPARKLE, PELA, FU_XUAN);
+
+        Recommendation best = recommender.recommend(owned, SynergyLookup.NONE, null, List.of(), 1).getFirst();
+
+        assertEquals(0, best.breakdown().mode());
+    }
+
+    /** The part of the mode score that comes from team shape (dual DPS +3 or nothing in these tests). */
+    private static double modeShapeBonus(Recommendation r) {
+        return r.reasons().stream().anyMatch(x -> x.startsWith("Two damage dealers")) ? 3 : 0;
     }
 }

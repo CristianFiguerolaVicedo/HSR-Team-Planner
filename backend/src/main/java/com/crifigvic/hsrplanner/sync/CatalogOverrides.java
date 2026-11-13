@@ -1,6 +1,7 @@
 package com.crifigvic.hsrplanner.sync;
 
 import com.crifigvic.hsrplanner.catalog.Role;
+import com.crifigvic.hsrplanner.catalog.Tag;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.springframework.core.io.ClassPathResource;
 import tools.jackson.databind.ObjectMapper;
@@ -17,16 +18,19 @@ import java.util.Objects;
  *
  * @param aliases       short name used by the build guides → real character name
  * @param roles         roles that win over {@link Role#defaultFor}, main role first
+ * @param tags          damage profile per character; missing = no tags
  * @param variantGroups extra "can't be in the same team" groups, character name → group
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record CatalogOverrides(Map<String, String> aliases, Map<String, List<Role>> roles, Map<String, String> variantGroups) {
+public record CatalogOverrides(Map<String, String> aliases, Map<String, List<Role>> roles, Map<String, List<Tag>> tags,
+                               Map<String, String> variantGroups) {
 
     public static final String RESOURCE = "catalog/overrides.json";
 
     public CatalogOverrides {
         aliases = Objects.requireNonNullElse(aliases, Map.of());
         roles = Objects.requireNonNullElse(roles, Map.of());
+        tags = Objects.requireNonNullElse(tags, Map.of());
         variantGroups = Objects.requireNonNullElse(variantGroups, Map.of());
     }
 

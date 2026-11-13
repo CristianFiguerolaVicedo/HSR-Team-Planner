@@ -85,6 +85,7 @@ public class CatalogSyncService {
             }
         });
         Map<Integer, List<Role>> roleOverrides = resolveOverrides(overrides.roles(), names);
+        Map<Integer, List<Tag>> tagOverrides = resolveOverrides(overrides.tags(), names);
         Map<Integer, String> groupOverrides = resolveOverrides(overrides.variantGroups(), names);
 
         Map<Integer, Character> saved = new LinkedHashMap<>();
@@ -105,6 +106,8 @@ public class CatalogSyncService {
             // Change the managed list in place: Hibernate tracks that collection
             entity.getRoles().clear();
             entity.getRoles().addAll(roles.stream().distinct().toList());
+            entity.getTags().clear();
+            entity.getTags().addAll(tagOverrides.getOrDefault(c.id(), List.of()));
             entity.setBaseSpd(baseSpd(c.ascension()));
             entity.setVariantGroup(groupOverrides.getOrDefault(c.id(), CharacterNames.builtInVariantGroup(c.name())));
             entity.setIconUrl(c.icon());

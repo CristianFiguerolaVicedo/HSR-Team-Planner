@@ -1,9 +1,9 @@
 import { useEffect, useRef } from "react";
-import { Check, Gauge, Plus, Route, Shield, Star, Trash2, X, Zap } from "lucide-react";
+import { Check, Flame, Gauge, Plus, Route, Shield, Star, Trash2, X, Zap } from "lucide-react";
 import { useRoster } from "../hooks/useRoster";
 import { useSynergies } from "../hooks/useSynergies";
 import { EIDOLON_RANGE } from "../util/roster";
-import { ELEMENT, PATH, roleLabel, rolesOf, tapeClass } from "../util/game";
+import { ELEMENT, PATH, roleLabel, rolesOf, tagLabel, tapeClass } from "../util/game";
 
 /**
  * Character detail on top of the catalog, built on the native <dialog>:
@@ -63,6 +63,7 @@ const CharacterDetail = ({ char, onClose, onSelect }) => {
               {path && <img src={path.icon} alt="" className="w-5 h-5 invert opacity-70" />} {path?.label ?? char.path}
             </Fact>
             <Fact icon={Shield} label={rolesOf(char).length > 1 ? "Roles" : "Role"}>{roleLabel(char)}</Fact>
+            {tagLabel(char) && <Fact icon={Flame} label="Damage">{tagLabel(char)}</Fact>}
             <Fact icon={Gauge} label="Base SPD">
               <span title="At level 80, before light cone, relics and traces">{char.baseSpd}</span>
             </Fact>

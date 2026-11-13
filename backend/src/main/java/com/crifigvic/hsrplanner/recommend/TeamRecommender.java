@@ -1,6 +1,7 @@
 package com.crifigvic.hsrplanner.recommend;
 
 import com.crifigvic.hsrplanner.catalog.Role;
+import com.crifigvic.hsrplanner.catalog.Tag;
 import com.crifigvic.hsrplanner.team.GameMode;
 import com.crifigvic.hsrplanner.team.validation.SynergyLookup;
 
@@ -19,7 +20,7 @@ import java.util.function.Consumer;
  *
  * <p>Score = synergy (pairs recommended together in HSRWiki's guides)
  *          + roles (sustain, supports, damage dealers)
- *          + game mode (dual DPS vs hypercarry)
+ *          + game mode (dual DPS vs hypercarry, AoE for Pure Fiction, break and single target for bosses)
  *          + investment (Eidolons).
  */
 public class TeamRecommender {
@@ -29,11 +30,24 @@ public class TeamRecommender {
     /** Extra sustains and supports added to every pool, so a balanced team is always possible. */
     static final int EXTRA_PER_ROLE = 3;
     static final double EIDOLON_WEIGHT = 0.5;
+    static final int AOE_BONUS = 2;
+    static final int BREAK_BONUS = 2;
+    static final int SINGLE_TARGET_BONUS = 1;
 
     /** A character you own, as the recommender sees it. */
-    public record Candidate(int id, String name, List<Role> roles, String variantGroup, int eidolon) {
+    public record Candidate(int id, String name, List<Role> roles, Set<Tag> tags, String variantGroup, int eidolon) {
         public Candidate {
             roles = List.copyOf(roles);
+            tags = Set.copyOf(tags);
+        }
+
+        /** Without tags (most supports). */
+        public Candidate(int id, String name, List<Role> roles, String variantGroup, int eidolon) {
+            this(id, name, roles, Set.of(), variantGroup, eidolon);
+        }
+
+        boolean tagged(Tag tag) {
+            return tags.contains(tag);
         }
 
         boolean has(Role role) {
@@ -238,7 +252,7 @@ public class TeamRecommender {
             }
             roles += 2 * Math.min(supports, 2);
 
-            // Game mode
+            // Game mode: team shape
             double modeScore = 0;
             if (mode == GameMode.PURE_FICTION || mode == GameMode.APOCALYPTIC_SHADOW) {
                 if (damage >= 2) {
@@ -256,6 +270,27 @@ public class TeamRecommender {
                 modeScore += 2;
             }
 
+            // Game mode: damage profile (tags)
+            Candidate carry = carry(team);
+            if (mode == GameMode.PURE_FICTION) {
+                List<String> aoe = team.stream().filter(c -> c.dealsDamage() && c.tagged(Tag.AOE)).map(Candidate::name).limit(2).toList();
+                if (!aoe.isEmpty()) {
+                    modeScore += AOE_BONUS * aoe.size();
+                    reasons.add(String.join(" and ", aoe) + " hit many enemies at once (Pure Fiction)");
+                }
+            } else if (mode == GameMode.APOCALYPTIC_SHADOW) {
+                List<String> breakers = team.stream().filter(c -> c.tagged(Tag.BREAK)).map(Candidate::name).limit(2).toList();
+                if (!breakers.isEmpty()) {
+                    modeScore += BREAK_BONUS * breakers.size();
+                    reasons.add(String.join(" and ", breakers) + " bring break for the boss (Apocalyptic Shadow)");
+                }
+            }
+            if ((mode == GameMode.APOCALYPTIC_SHADOW || mode == GameMode.MEMORY_OF_CHAOS)
+                    && carry != null && carry.tagged(Tag.SINGLE_TARGET)) {
+                modeScore += SINGLE_TARGET_BONUS;
+                reasons.add(carry.name() + " focuses single targets (" + label(mode) + ")");
+            }
+
             // Investment: Eidolons you already have
             double investment = EIDOLON_WEIGHT * team.stream().mapToInt(Candidate::eidolon).sum();
             if (investment > 0) {
@@ -268,6 +303,13 @@ public class TeamRecommender {
                     .map(Candidate::id)
                     .toList();
             return new Recommendation(ordered, breakdown.total(), breakdown, List.copyOf(reasons));
+        }
+
+        /** Who carries the damage: the first Main DPS, or the first Sub-DPS without one. */
+        private static Candidate carry(List<Candidate> team) {
+            return team.stream().filter(c -> c.has(Role.MAIN_DPS)).findFirst()
+                    .or(() -> team.stream().filter(c -> c.has(Role.SUB_DPS)).findFirst())
+                    .orElse(null);
         }
 
         private static String nameWith(List<Candidate> team, Role role) {

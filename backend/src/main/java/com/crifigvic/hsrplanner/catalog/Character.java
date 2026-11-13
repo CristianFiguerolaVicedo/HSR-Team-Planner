@@ -8,7 +8,9 @@ import org.hibernate.annotations.FetchMode;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 /** A playable character, copied from HSRWiki by the sync. The id is the game's own id (e.g. 1005). */
 @Entity
@@ -46,6 +48,14 @@ public class Character {
     @Column(name = "role", nullable = false, length = 20)
     @Fetch(FetchMode.SUBSELECT)
     private List<Role> roles = new ArrayList<>();
+
+    /** Damage profile (AoE, single target, break); empty for most supports. */
+    @ElementCollection
+    @CollectionTable(name = "character_tags", joinColumns = @JoinColumn(name = "character_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tag", nullable = false, length = 20)
+    @Fetch(FetchMode.SUBSELECT)
+    private Set<Tag> tags = EnumSet.noneOf(Tag.class);
 
     /** Main role: the first one. */
     public Role mainRole() {

@@ -30,16 +30,27 @@ export const ROLES = [
   { name: "SUSTAIN", label: "Sustain" },
 ];
 
+/** Damage profile, set by hand on the backend (overrides.json). */
+export const TAGS = [
+  { name: "AOE", label: "AoE" },
+  { name: "SINGLE_TARGET", label: "Single target" },
+  { name: "BREAK", label: "Break" },
+];
+
 const byName = (list) => Object.fromEntries(list.map((item) => [item.name, item]));
 export const ELEMENT = byName(ELEMENTS);
 export const PATH = byName(PATHS);
 export const ROLE = byName(ROLES);
+export const TAG = byName(TAGS);
 
 /** A character's roles (main first), falling back to the single `role` older API answers had. */
 export const rolesOf = (char) => (char.roles?.length ? char.roles : [char.role].filter(Boolean));
 
 /** "Sub-DPS / Debuffer" */
 export const roleLabel = (char) => rolesOf(char).map((r) => ROLE[r]?.label ?? r).join(" / ");
+
+/** "AoE / Break", or "" for characters without tags. */
+export const tagLabel = (char) => (char.tags ?? []).map((t) => TAG[t]?.label ?? t).join(" / ");
 
 /** Washi tape class from index.css, one colour per element (same as HSRWiki). */
 export const tapeClass = (element) => `tape-${element.toLowerCase()}`;
