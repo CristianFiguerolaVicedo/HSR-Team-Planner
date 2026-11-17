@@ -3,6 +3,7 @@ package com.crifigvic.hsrplanner.auth;
 import com.crifigvic.hsrplanner.config.PlannerProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
@@ -33,6 +34,9 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers("/api/me/**").authenticated()
+                        // Editing and deleting teams: owner only (checked in TeamService), so a session is required
+                        .requestMatchers(HttpMethod.PUT, "/api/teams/*").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/teams/*").authenticated()
                         .anyRequest().permitAll())
 
                 .oauth2Login(login -> login

@@ -8,6 +8,7 @@ const Roster = lazy(() => import('./pages/Roster'));
 const TeamBuilder = lazy(() => import('./pages/TeamBuilder'));
 const Calculator = lazy(() => import('./pages/Calculator'));
 const SharedTeam = lazy(() => import('./pages/SharedTeam'));
+const MyTeams = lazy(() => import('./pages/MyTeams'));
 
 const LoadingFallback = () => (
   <div className="flex items-center justify-center h-64">
@@ -26,6 +27,7 @@ const App = () => {
               <Route path='/roster' element={<Roster />}/>
               <Route path='/builder' element={<TeamBuilder />}/>
               <Route path='/spd' element={<Calculator />}/>
+              <Route path='/my-teams' element={<MyTeams />}/>
               {/* Share links: /t/aZ3kP9qX */}
               <Route path='/t/:shareCode' element={<SharedTeam />}/>
             </Routes>

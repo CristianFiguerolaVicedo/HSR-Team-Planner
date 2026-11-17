@@ -1,5 +1,6 @@
 package com.crifigvic.hsrplanner.team;
 
+import com.crifigvic.hsrplanner.account.AppUser;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -8,8 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A shared team. There's no login in the MVP, so a team is an immutable snapshot:
- * "editing" a team in the frontend creates a new one with a new share code.
+ * A shared team. Saved without an account it's an immutable snapshot ("edit a copy" makes a new one);
+ * saved while logged in it has an owner, who can edit it in place (same link) or delete it.
  */
 @Entity
 @Table(name = "teams")
@@ -40,6 +41,19 @@ public class Team {
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
+
+    /** Last edit by its owner; null if never edited. */
+    @Column(name = "updated_at")
+    private Instant updatedAt;
+
+    /** Who saved it while logged in; null for teams saved without an account (those never change). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id")
+    private AppUser owner;
+
+    public Long ownerId() {
+        return owner == null ? null : owner.getId();
+    }
 
     @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("position ASC")

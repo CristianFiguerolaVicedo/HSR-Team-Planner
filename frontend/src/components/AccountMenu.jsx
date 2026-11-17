@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { LogIn, LogOut, UserRound } from "lucide-react";
+import { FolderHeart, LogIn, LogOut, UserRound } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useSession } from "../hooks/useSession";
 
 /**
@@ -53,6 +54,10 @@ const AccountMenu = () => {
                 Signed in with {user.provider === "discord" ? "Discord" : "Google"} as{" "}
                 <span className="font-semibold text-text-primary">{user.name}</span>
               </p>
+              <Link to="/my-teams" role="menuitem" onClick={() => setOpen(false)}
+                className="flex items-center gap-2 px-2 py-2 rounded-md text-sm font-semibold text-text-primary hover:bg-bg-elevated">
+                <FolderHeart size={16} /> My teams
+              </Link>
               <button type="button" role="menuitem" onClick={() => { setOpen(false); logout(); }}
                 className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm text-text-secondary hover:text-accent-red hover:bg-accent-red-muted">
                 <LogOut size={16} /> Sign out

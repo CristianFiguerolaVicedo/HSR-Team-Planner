@@ -76,7 +76,7 @@ LightCone
 | `Character` | `id` (game id), `name`, `rarity`, `element`, `path`, `roles`, `baseSpd`, `variantGroup` | `roles` = Main DPS, Sub-DPS, Amplifier, Debuffer, Sustain; main role first, some characters have two. `tags` = damage profile (AoE, Single target, Break). `variantGroup` stops two versions of one character in the same team (all Trailblazers). |
 | `LightCone` | `id`, `name` (unique), `rarity`, `path`, `hsrwikiId` | Matched by name: HSRWiki builds light cone ids from a name hash. |
 | `Synergy` | `characterA`, `characterB`, `score`, `source`, `reason` | One row per pair with `A.id < B.id`. `BUILD_GUIDE` rows are rebuilt on every sync; `CURATED` rows are never touched. |
-| `Team` | `shareCode` (8 chars, unique), `name`, `gameMode`, `notes`, `createdAt` | Immutable snapshot (no login yet): editing creates a new team. |
+| `Team` | `shareCode` (8 chars, unique), `name`, `gameMode`, `notes`, `createdAt`, `updatedAt`, `owner` | Saved while logged in: the owner can edit it (same link) or delete it. Saved anonymously: immutable snapshot, "edit a copy" makes a new one. |
 | `TeamSlot` | `position` (0–3), `character`, `lightCone`, `eidolon`, `superimposition`, `spd` | `spd` is the final in-combat SPD and drives the SPD analysis. |
 
 ## API
@@ -94,6 +94,9 @@ All endpoints are under `/api`. Errors are `application/problem+json`.
 | POST | `/spd/team` | SPD analysis for up to 4 units: `{"speeds": [134, 160], "cycles": 3}` |
 | POST | `/teams/validate` | Check a team without saving it (roles, synergies, issues) |
 | POST | `/teams` | Save a team → `201` with its `shareCode`; `422` if it breaks a rule |
+| PUT | `/teams/{shareCode}` | Owner only: replaces the team, same link (`401` / `403` otherwise) |
+| DELETE | `/teams/{shareCode}` | Owner only: deletes the team |
+| GET | `/me/teams` | Teams saved while logged in, newest first |
 | GET | `/teams/{shareCode}` | A shared team, with SPD analysis per slot |
 | POST | `/recommendations` | Best teams from your characters: `{"owned": {"1102": 2, ...}, "gameMode": "PURE_FICTION", "mustInclude": [1102]}` |
 | GET | `/auth/providers` | Login buttons to show (only providers with credentials) |
@@ -134,7 +137,7 @@ Local setup:
 2. `cp backend/.env.example backend/.env` and fill in the ids and secrets. `backend/.env` is git-ignored.
 3. Open the site through Vite (`http://localhost:5173`), not the API port. Providers without credentials are hidden.
 
-**What an account keeps:** "My characters" moves from the browser to the account (`users` and `user_roster` tables, Flyway V4), so it follows you to every device. Changes are shown at once and saved a moment later with a `PUT` of the whole roster; the browser's own roster is left untouched and comes back after logging out. The first time you log in with characters in the browser that the account lacks, the site asks whether to add them. Users are created with a PostgreSQL upsert (`ON CONFLICT`), and whose data it is always comes from the session, never from the request.
+**What an account keeps:** "My characters" moves from the browser to the account (`users` and `user_roster` tables, Flyway V4), so it follows you to every device. Teams saved while logged in get an owner: "My teams" lists them, and only the owner can edit them in place or delete them (`TeamPermissions`, checked on the server; teams saved without an account can't be changed by anyone). Changes are shown at once and saved a moment later with a `PUT` of the whole roster; the browser's own roster is left untouched and comes back after logging out. The first time you log in with characters in the browser that the account lacks, the site asks whether to add them. Users are created with a PostgreSQL upsert (`ON CONFLICT`), and whose data it is always comes from the session, never from the request.
 
 ## Catalog sync
 

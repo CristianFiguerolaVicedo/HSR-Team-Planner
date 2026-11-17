@@ -12,6 +12,10 @@ public record TeamResponse(
         GameMode gameMode,
         String notes,
         Instant createdAt,
+        /** Last edit by its owner, or null. */
+        Instant updatedAt,
+        /** True when the person asking owns it, so the page can offer Edit and Delete. */
+        boolean editable,
         List<TeamSlotResponse> slots,
         TeamValidationResult validation
 ) {

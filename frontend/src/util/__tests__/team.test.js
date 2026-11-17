@@ -95,3 +95,15 @@ test("a recommendation fills the slots and keeps builds already in the draft", (
   assert.deepEqual(slots[2], newSlot(1106, 6));
   assert.equal(slots.length, 4);
 });
+
+test("draftFromTeam edits in place only when asked", () => {
+  const team = { shareCode: "aZ3kP9qX", name: "Mine", gameMode: null, notes: null, slots: [] };
+  assert.equal(draftFromTeam(team).editingCode, null);
+  assert.equal(draftFromTeam(team, { inPlace: true }).editingCode, "aZ3kP9qX");
+});
+
+test("the share code being edited is never sent as part of the team", () => {
+  const draft = { ...emptyDraft(), editingCode: "aZ3kP9qX" };
+  draft.slots[0] = newSlot(1102);
+  assert.equal("editingCode" in toTeamRequest(draft), false);
+});

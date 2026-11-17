@@ -13,12 +13,14 @@ export const GAME_MODES = [
 /**
  * Draft being edited. slots always has 4 entries; an empty one is null.
  * slot: { characterId, eidolon, lightConeId, superimposition, spd }
+ * editingCode: share code of one of your saved teams being edited in place, or null for a new team.
  */
 export const emptyDraft = () => ({
   name: "",
   gameMode: null,
   notes: "",
   slots: Array(TEAM_SIZE).fill(null),
+  editingCode: null,
 });
 
 export const newSlot = (characterId, eidolon = 0) => ({
@@ -52,9 +54,13 @@ export const toTeamRequest = (draft) => {
   };
 };
 
-/** Turns a saved team (GET /teams/{code}) back into a draft, to edit a copy of it. */
-export const draftFromTeam = (team) => {
+/**
+ * Turns a saved team (GET /teams/{code}) back into a draft.
+ * inPlace: edit that same team (only offered to its owner); otherwise a copy that saves as a new team.
+ */
+export const draftFromTeam = (team, { inPlace = false } = {}) => {
   const draft = emptyDraft();
+  draft.editingCode = inPlace ? team.shareCode : null;
   draft.name = team.name ?? "";
   draft.gameMode = team.gameMode ?? null;
   draft.notes = team.notes ?? "";

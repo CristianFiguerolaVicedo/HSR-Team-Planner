@@ -6,6 +6,7 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.Principal;
 import java.time.Clock;
 import java.time.Instant;
 
@@ -36,6 +37,12 @@ public class CurrentUserService {
         AuthenticatedUser info = identity(authentication);
         return users.findByProviderAndProviderId(info.provider(), info.providerId())
                 .orElseGet(() -> touch(authentication));
+    }
+
+    /** The user if this request comes from someone logged in, null otherwise (public endpoints). */
+    @Transactional
+    public AppUser currentOrNull(Principal principal) {
+        return principal instanceof OAuth2AuthenticationToken token ? current(token) : null;
     }
 
     static AuthenticatedUser identity(OAuth2AuthenticationToken authentication) {

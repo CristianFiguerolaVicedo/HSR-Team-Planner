@@ -114,4 +114,15 @@ export const putJson = async (url, body) => {
   }
 };
 
+/** DELETE without retries. */
+export const deleteJson = async (url) => {
+  started();
+  try {
+    const response = await apiClient.delete(url);
+    return response.data;
+  } finally {
+    finished();
+  }
+};
+
 export default apiClient;

@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Check, Copy, ExternalLink, Save } from "lucide-react";
+import { Check, Copy, CopyPlus, ExternalLink, Pencil, Save } from "lucide-react";
 import { Link } from "react-router-dom";
-import { createTeam } from "../../services/plannerService";
+import { createTeam, updateTeam } from "../../services/plannerService";
 import { GAME_MODES } from "../../util/team";
 import { shareLink } from "../../util/share";
 
@@ -18,17 +18,31 @@ const SaveTeam = ({ draft, setField, request, canSave }) => {
   const requestKey = request ? JSON.stringify(request) : null;
   const savedTeam = saved && saved.key === requestKey ? saved.team : null;
 
-  const save = async () => {
+  const editing = draft.editingCode;
+
+  /**
+   * Editing one of your teams: PUT keeps its link. Otherwise (or "Save as new"): POST creates a new link.
+   * A team created while logged in comes back editable, so the next save updates it instead of
+   * making yet another link. Anonymous teams stay snapshots.
+   */
+  const save = async (asNew = false) => {
     setSaving(true);
     setError(null);
     try {
-      const team = await createTeam(request);
+      const team = editing && !asNew ? await updateTeam(editing, request) : await createTeam(request);
       setSaved({ key: requestKey, team });
+      setField("editingCode", team.editable ? team.shareCode : null);
     } catch (err) {
       const status = err.response?.status;
-      setError(status === 422
-        ? "The team breaks a rule: check the list on the left."
-        : err.response?.data?.detail ?? "Couldn't save the team. Try again.");
+      if (editing && (status === 403 || status === 404 || status === 401)) {
+        setField("editingCode", null); // can't update that link anymore: next save makes a new one
+      }
+      setError({
+        422: "The team breaks a rule: check the list on the left.",
+        401: "Your session ended: sign in again to update this team, or save it as a new one.",
+        403: "This team isn't yours, so it can't be changed. Save it as a new team instead.",
+        404: "That team was deleted. Save it as a new team instead.",
+      }[status] ?? err.response?.data?.detail ?? "Couldn't save the team. Try again.");
     } finally {
       setSaving(false);
     }
@@ -51,13 +65,30 @@ const SaveTeam = ({ draft, setField, request, canSave }) => {
           placeholder="Rotation, relic sets, who to swap in…" className={`${inputClass} mt-1 font-normal resize-y`} />
       </label>
 
+      {editing && !savedTeam && (
+        <p className="flex items-center gap-1.5 text-xs text-text-secondary">
+          <Pencil size={14} className="text-accent-cyan" /> Editing your team <span className="font-semibold">{editing}</span>: its link stays the same.
+          <button type="button" onClick={() => setField("editingCode", null)} className="ml-auto underline underline-offset-2 hover:text-text-primary">
+            Stop editing
+          </button>
+        </p>
+      )}
+
       {savedTeam ? (
         <ShareBox code={savedTeam.shareCode} />
       ) : (
-        <button type="button" onClick={save} disabled={!canSave || saving}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-semibold bg-text-primary text-bg-card hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed">
-          <Save size={18} /> {saving ? "Saving…" : "Save and get link"}
-        </button>
+        <div className="space-y-2">
+          <button type="button" onClick={() => save(false)} disabled={!canSave || saving}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-semibold bg-text-primary text-bg-card hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed">
+            <Save size={18} /> {saving ? "Saving…" : editing ? "Save changes" : "Save and get link"}
+          </button>
+          {editing && (
+            <button type="button" onClick={() => save(true)} disabled={!canSave || saving}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold border border-border bg-bg-card text-text-primary hover:bg-bg-elevated disabled:opacity-40 disabled:cursor-not-allowed">
+              <CopyPlus size={16} /> Save as a new team
+            </button>
+          )}
+        </div>
       )}
       {!request && <p className="text-xs text-text-muted">Add at least one character to save.</p>}
       {error && <p className="text-sm text-accent-red" role="alert">{error}</p>}

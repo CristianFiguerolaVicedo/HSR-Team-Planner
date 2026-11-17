@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { CalendarDays, Pencil, Swords } from "lucide-react";
+import { CalendarDays, CopyPlus, Pencil, Swords, Trash2 } from "lucide-react";
 import { useTeam } from "../hooks/useTeam";
+import { deleteTeam } from "../services/plannerService";
 import { loadDraft } from "../hooks/useTeamDraft";
 import TeamSlot from "../components/team/TeamSlot";
 import ValidationPanel from "../components/team/ValidationPanel";
@@ -17,6 +19,8 @@ const SharedTeam = () => {
   const { shareCode } = useParams();
   const navigate = useNavigate();
   const { team, loading, error, notFound } = useTeam(shareCode);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
 
   if (loading) return <SkeletonLoader type="card" count={4} />;
   if (notFound) {
@@ -33,9 +37,22 @@ const SharedTeam = () => {
   if (error) return <LoadError error={error} what="this team" />;
 
   const slotsByPosition = Object.fromEntries(team.slots.map((s) => [s.position, s]));
-  const editCopy = () => {
-    loadDraft(draftFromTeam(team));
+  const openInBuilder = (inPlace) => {
+    loadDraft(draftFromTeam(team, { inPlace }));
     navigate("/builder");
+  };
+
+  const remove = async () => {
+    if (!window.confirm(`Delete "${team.name}"? Its link will stop working for everyone. This can't be undone.`)) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteTeam(team.shareCode);
+      navigate("/my-teams");
+    } catch (err) {
+      setDeleteError(err.response?.data?.detail ?? "Couldn't delete the team. Try again.");
+      setDeleting(false);
+    }
   };
 
   return (
@@ -47,13 +64,33 @@ const SharedTeam = () => {
           <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-text-secondary">
             {team.gameMode && <span className="px-2 py-0.5 rounded-md bg-[#FFE68F] border border-[#E3C552] text-text-primary font-semibold">{MODE_LABEL[team.gameMode] ?? team.gameMode}</span>}
             <span className="flex items-center gap-1"><CalendarDays size={14} /> {new Date(team.createdAt).toLocaleDateString()}</span>
+            {team.updatedAt && <span>updated {new Date(team.updatedAt).toLocaleDateString()}</span>}
+            {team.editable && <span className="font-semibold text-accent-cyan">your team</span>}
           </p>
         </div>
-        <button type="button" onClick={editCopy}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold bg-text-primary text-bg-card hover:opacity-90">
-          <Pencil size={16} /> Edit a copy
-        </button>
+        <div className="flex flex-wrap gap-2">
+          {team.editable && (
+            <>
+              <button type="button" onClick={() => openInBuilder(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold bg-text-primary text-bg-card hover:opacity-90">
+                <Pencil size={16} /> Edit
+              </button>
+              <button type="button" onClick={remove} disabled={deleting}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-text-secondary hover:text-accent-red hover:bg-accent-red-muted disabled:opacity-40">
+                <Trash2 size={16} /> {deleting ? "Deleting…" : "Delete"}
+              </button>
+            </>
+          )}
+          <button type="button" onClick={() => openInBuilder(false)}
+            className={team.editable
+              ? "flex items-center gap-2 px-3 py-2 rounded-lg text-sm border border-border bg-bg-card text-text-primary hover:bg-bg-elevated"
+              : "flex items-center gap-2 px-4 py-2 rounded-lg font-semibold bg-text-primary text-bg-card hover:opacity-90"}>
+            {team.editable ? <CopyPlus size={16} /> : <Pencil size={16} />} Edit a copy
+          </button>
+        </div>
       </div>
+
+      {deleteError && <p className="mb-4 text-sm text-accent-red" role="alert">{deleteError}</p>}
 
       {team.notes && (
         <p className="glass-panel p-4 mb-6 whitespace-pre-line text-text-primary">{team.notes}</p>

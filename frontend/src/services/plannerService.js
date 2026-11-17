@@ -1,4 +1,4 @@
-import { fetchJson, getOnce, postJson, putJson } from "./apiClient";
+import { deleteJson, fetchJson, getOnce, postJson, putJson } from "./apiClient";
 
 // One function per backend endpoint (see README → API)
 
@@ -48,3 +48,12 @@ export const getMyRoster = () => getOnce("/me/roster");
 
 /** Replaces the account's roster and returns what the server stored (it drops unknown ids). */
 export const putMyRoster = (roster) => putJson("/me/roster", roster);
+
+/** Teams saved while logged in, newest first: [{ shareCode, name, gameMode, createdAt, updatedAt, members }]. */
+export const getMyTeams = () => getOnce("/me/teams");
+
+/** Owner only: replaces the team behind this link (the link stays the same). */
+export const updateTeam = (shareCode, team) => putJson(`/teams/${encodeURIComponent(shareCode)}`, team);
+
+/** Owner only: deletes the team; its link stops working. */
+export const deleteTeam = (shareCode) => deleteJson(`/teams/${encodeURIComponent(shareCode)}`);
