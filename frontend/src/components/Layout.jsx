@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 import { BookOpen, Calculator, Swords, TrainFront, UsersRound, X } from "lucide-react";
 import { isServerWaking, onServerWakingChange } from "../services/apiClient";
 import AccountMenu from "./AccountMenu";
+import RosterSync from "./RosterSync";
 import { wikiUrl } from "../util/links";
 
 const LINKS = [
@@ -86,6 +87,7 @@ const Layout = ({ children }) => (
       </div>
     </header>
     <LoginErrorBanner />
+    <RosterSync />
     <main className="max-w-7xl mx-auto px-4 py-8">{children}</main>
     <WakingBanner />
   </div>

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { applyRosterChanges, clampEidolon, parseRoster } from "../roster.js";
+import { applyRosterChanges, clampEidolon, localExtras, parseRoster, sameRoster } from "../roster.js";
 
 test("parseRoster reads a saved roster", () => {
   assert.deepEqual(parseRoster('{"1102": 2, "1306": 0}'), { 1102: 2, 1306: 0 });
@@ -31,4 +31,19 @@ test("applyRosterChanges adds, updates and removes without touching the original
 
   assert.deepEqual(after, { 1102: 2, 1006: 0 });
   assert.deepEqual(before, { 1102: 0, 1306: 1 });
+});
+
+test("localExtras finds what the browser has and the account doesn't", () => {
+  const local = { 1102: 2, 1306: 0, 1208: 1 };
+  const account = { 1102: 3, 1306: 0, 1006: 0 };
+  // 1102 is higher in the account (kept), 1306 is equal, 1208 is missing
+  assert.deepEqual(localExtras(local, account), { 1208: 1 });
+  assert.deepEqual(localExtras({ 1102: 4 }, { 1102: 1 }), { 1102: 4 });
+  assert.deepEqual(localExtras({}, account), {});
+});
+
+test("sameRoster compares characters and Eidolons", () => {
+  assert.equal(sameRoster({ 1: 0, 2: 1 }, { 2: 1, 1: 0 }), true);
+  assert.equal(sameRoster({ 1: 0 }, { 1: 1 }), false);
+  assert.equal(sameRoster({ 1: 0 }, { 1: 0, 2: 0 }), false);
 });

@@ -5,7 +5,7 @@ import axios from "axios";
 // (vercel.json rewrites). Same origin is what makes login work: the session cookie and the CSRF cookie
 // are first-party, and axios copies the XSRF-TOKEN cookie into the X-XSRF-TOKEN header by itself.
 // VITE_API_BASE_URL still exists to point at another API, but login won't work cross-origin.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 // Free hosting plans can put the API to sleep, and the first request then takes a while.
 // So requests wait long enough, GETs are retried for up to 4 minutes while the server is
@@ -97,6 +97,17 @@ export const getOnce = async (url) => {
   started();
   try {
     const response = await apiClient.get(url);
+    return response.data;
+  } finally {
+    finished();
+  }
+};
+
+/** PUT without retries (same reason as postJson: the caller decides what to do on failure). */
+export const putJson = async (url, body) => {
+  started();
+  try {
+    const response = await apiClient.put(url, body);
     return response.data;
   } finally {
     finished();

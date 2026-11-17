@@ -42,6 +42,8 @@ HSR-Team-Planner/
 │   │   ├── spd/                     SPD calculator (pure Java) + endpoint
 │   │   ├── recommend/               Rule-based team recommender (pure Java) + endpoint
 │   │   ├── importer/                Import by UID from Enka.Network / Mihomo
+│   │   ├── auth/                    Spring Security: OAuth2 login, CSRF for the SPA
+│   │   ├── account/                 Users and their saved "My characters"
 │   │   ├── config/                  Properties, CORS, clock, scheduling
 │   │   └── common/                  Error handling (RFC 9457 problem details)
 │   ├── src/main/resources/
@@ -97,6 +99,8 @@ All endpoints are under `/api`. Errors are `application/problem+json`.
 | GET | `/auth/providers` | Login buttons to show (only providers with credentials) |
 | GET | `/me` | Logged-in user (`401` without a session) |
 | POST | `/logout` | Ends the session |
+| GET | `/me/roster` | The logged-in user's "My characters": `{"1102": 2, ...}` (`401` without a session) |
+| PUT | `/me/roster` | Replaces it; unknown ids are dropped, Eidolons outside 0–6 are a `400` |
 | GET | `/import/{uid}` | Characters and Eidolons in a player's in-game showcase (Enka.Network, Mihomo as fallback) |
 | POST | `/admin/sync` | Re-sync the catalog now (header `X-Admin-Token`) |
 
@@ -129,6 +133,8 @@ Local setup:
 1. Create an application in the [Discord Developer Portal](https://discord.com/developers/applications) (OAuth2 → copy Client ID, reset and copy Client Secret, add the redirect `http://localhost:5173/login/oauth2/code/discord`) and/or an OAuth client in Google Cloud (Google Auth Platform → Branding, Audience with yourself as test user, Clients → Web application, redirect `http://localhost:5173/login/oauth2/code/google`).
 2. `cp backend/.env.example backend/.env` and fill in the ids and secrets. `backend/.env` is git-ignored.
 3. Open the site through Vite (`http://localhost:5173`), not the API port. Providers without credentials are hidden.
+
+**What an account keeps:** "My characters" moves from the browser to the account (`users` and `user_roster` tables, Flyway V4), so it follows you to every device. Changes are shown at once and saved a moment later with a `PUT` of the whole roster; the browser's own roster is left untouched and comes back after logging out. The first time you log in with characters in the browser that the account lacks, the site asks whether to add them. Users are created with a PostgreSQL upsert (`ON CONFLICT`), and whose data it is always comes from the session, never from the request.
 
 ## Catalog sync
 

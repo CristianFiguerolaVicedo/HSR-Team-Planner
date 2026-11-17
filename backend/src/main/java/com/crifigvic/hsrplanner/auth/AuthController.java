@@ -1,5 +1,6 @@
 package com.crifigvic.hsrplanner.auth;
 
+import com.crifigvic.hsrplanner.account.CurrentUserService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
@@ -19,9 +20,11 @@ public class AuthController {
     private static final List<String> PROVIDERS = List.of("discord", "google");
 
     private final ClientRegistrationRepository registrations;
+    private final CurrentUserService currentUser;
 
-    public AuthController(ClientRegistrationRepository registrations) {
+    public AuthController(ClientRegistrationRepository registrations, CurrentUserService currentUser) {
         this.registrations = registrations;
+        this.currentUser = currentUser;
     }
 
     public record LoginProvider(String id, String name, String loginUrl) {
@@ -47,6 +50,8 @@ public class AuthController {
      */
     @GetMapping("/me")
     public AuthenticatedUser me(OAuth2AuthenticationToken authentication) {
+        // First call after logging in creates the user row; later ones refresh name and avatar
+        currentUser.touch(authentication);
         return AuthenticatedUser.from(authentication.getAuthorizedClientRegistrationId(),
                 authentication.getPrincipal().getAttributes());
     }

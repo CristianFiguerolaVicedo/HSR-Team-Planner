@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { getAuthProviders, getMe, logout as logoutRequest } from "../services/plannerService";
+import { flushAccountRoster } from "./useRoster";
 
 /*
  * Who is logged in, shared by every component (same store pattern as useRoster / HSRWiki's useCollection).
@@ -48,6 +49,8 @@ export const useSession = () => {
 
   const logout = useCallback(async () => {
     try {
+      // Save the last roster change while the session still exists
+      await flushAccountRoster().catch(() => {});
       await logoutRequest();
     } finally {
       // Even if the request failed, stop showing the user as logged in; the next refresh tells the truth

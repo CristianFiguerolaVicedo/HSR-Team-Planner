@@ -33,3 +33,22 @@ export const applyRosterChanges = (roster, changes) => {
   }
   return next;
 };
+
+/**
+ * What the browser roster has that the account doesn't: characters missing from the account,
+ * or with a higher Eidolon there. Returned as changes for the account ({ [id]: eidolon }).
+ * Eidolons never go down: you can't lose one in the game.
+ */
+export const localExtras = (local, account) => {
+  const changes = {};
+  for (const [id, eidolon] of Object.entries(local)) {
+    if (!(id in account) || account[id] < eidolon) changes[id] = eidolon;
+  }
+  return changes;
+};
+
+/** Same characters with the same Eidolons. */
+export const sameRoster = (a, b) => {
+  const keys = Object.keys(a);
+  return keys.length === Object.keys(b).length && keys.every((id) => b[id] === a[id]);
+};

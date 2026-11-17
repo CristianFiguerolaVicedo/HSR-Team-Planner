@@ -1,4 +1,4 @@
-import { fetchJson, getOnce, postJson } from "./apiClient";
+import { fetchJson, getOnce, postJson, putJson } from "./apiClient";
 
 // One function per backend endpoint (see README → API)
 
@@ -42,3 +42,9 @@ export const getMe = async () => {
 
 /** Ends the session on the server (POST, so it carries the CSRF token). */
 export const logout = () => postJson("/logout");
+
+/** "My characters" saved in the account: { [characterId]: eidolon }. Needs a session. */
+export const getMyRoster = () => getOnce("/me/roster");
+
+/** Replaces the account's roster and returns what the server stored (it drops unknown ids). */
+export const putMyRoster = (roster) => putJson("/me/roster", roster);

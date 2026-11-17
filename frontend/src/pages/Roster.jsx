@@ -16,7 +16,7 @@ import { EMPTY_FILTERS, activeFilterCount, filterCharacters } from "../util/filt
  */
 const Roster = () => {
   const { characters, loading, error } = useCharacters();
-  const { owned, toggle, setMany, clear } = useRoster();
+  const { owned, toggle, setMany, clear, source, saving } = useRoster();
   const [filters, setFilters] = useState(EMPTY_FILTERS);
 
   const visible = useMemo(() => filterCharacters(characters, filters, owned), [characters, filters, owned]);
@@ -40,6 +40,11 @@ const Roster = () => {
         <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-text-primary">My characters</h1>
         <p className="font-hand text-2xl text-text-secondary mt-1">
           tap everyone you have; the team builder will only use them
+        </p>
+        <p className="mt-1 text-sm text-text-muted" aria-live="polite">
+          {source === "account"
+            ? (saving === "saving" ? "Saving to your account…" : "Saved to your account")
+            : "Saved in this browser"}
         </p>
       </div>
 
