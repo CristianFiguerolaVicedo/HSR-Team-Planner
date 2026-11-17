@@ -8,7 +8,7 @@
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
 
-> Status: **MVP complete, phase 2 in progress**. Done: catalog, "My characters", team builder with live validation, SPD calculator, share links and a rule-based team recommender, import by UID. Next: Discord/Google login, deployment.
+> Status: **MVP and phase 2 complete**. Catalog, "My characters", team builder with live validation, SPD calculator, share links, rule-based recommender, import by UID and optional Discord/Google login (characters and teams kept in your account). Next: deployment.
 
 ## Sister project: HSRWiki
 
@@ -27,7 +27,7 @@ Both apps use the game's own character ids, so these links are exact.
 4. **SPD calculator**: actions in cycle 0 and the SPD missing for the next breakpoint.
 5. **Share by link**: every saved team gets a short id, e.g. `/t/aZ3kP9qX`.
 
-Phase 2: import characters by UID (Mihomo / Enka.Network), Discord/Google login, and a rule-based recommender per game mode.
+Phase 2 (done): a rule-based recommender per game mode, import by UID (Enka.Network / Mihomo) and optional Discord/Google login.
 
 ## Project structure
 
@@ -102,6 +102,7 @@ All endpoints are under `/api`. Errors are `application/problem+json`.
 | GET | `/auth/providers` | Login buttons to show (only providers with credentials) |
 | GET | `/me` | Logged-in user (`401` without a session) |
 | POST | `/logout` | Ends the session |
+| DELETE | `/me` | Deletes the account, its saved characters and its teams, then ends the session |
 | GET | `/me/roster` | The logged-in user's "My characters": `{"1102": 2, ...}` (`401` without a session) |
 | PUT | `/me/roster` | Replaces it; unknown ids are dropped, Eidolons outside 0–6 are a `400` |
 | GET | `/import/{uid}` | Characters and Eidolons in a player's in-game showcase (Enka.Network, Mihomo as fallback) |
@@ -137,7 +138,9 @@ Local setup:
 2. `cp backend/.env.example backend/.env` and fill in the ids and secrets. `backend/.env` is git-ignored.
 3. Open the site through Vite (`http://localhost:5173`), not the API port. Providers without credentials are hidden.
 
-**What an account keeps:** "My characters" moves from the browser to the account (`users` and `user_roster` tables, Flyway V4), so it follows you to every device. Teams saved while logged in get an owner: "My teams" lists them, and only the owner can edit them in place or delete them (`TeamPermissions`, checked on the server; teams saved without an account can't be changed by anyone). Changes are shown at once and saved a moment later with a `PUT` of the whole roster; the browser's own roster is left untouched and comes back after logging out. The first time you log in with characters in the browser that the account lacks, the site asks whether to add them. Users are created with a PostgreSQL upsert (`ON CONFLICT`), and whose data it is always comes from the session, never from the request.
+**What an account keeps:** "My characters" moves from the browser to the account (`users` and `user_roster` tables, Flyway V4), so it follows you to every device. Teams saved while logged in get an owner: "My teams" lists them, and only the owner can edit them in place or delete them (`TeamPermissions`, checked on the server; teams saved without an account can't be changed by anyone).
+
+**Privacy:** `/privacy` explains in plain words what is stored and where. "Delete my account" (account menu or privacy page, confirmed by typing DELETE) calls `DELETE /api/me`; the database removes the saved characters and the teams with it (`ON DELETE CASCADE`, Flyway V6), so their links stop working. "Clear this browser's data" wipes what the site keeps in local storage. Changes are shown at once and saved a moment later with a `PUT` of the whole roster; the browser's own roster is left untouched and comes back after logging out. The first time you log in with characters in the browser that the account lacks, the site asks whether to add them. Users are created with a PostgreSQL upsert (`ON CONFLICT`), and whose data it is always comes from the session, never from the request.
 
 ## Catalog sync
 

@@ -57,3 +57,6 @@ export const updateTeam = (shareCode, team) => putJson(`/teams/${encodeURICompon
 
 /** Owner only: deletes the team; its link stops working. */
 export const deleteTeam = (shareCode) => deleteJson(`/teams/${encodeURIComponent(shareCode)}`);
+
+/** Deletes the account, its saved characters and its teams, and ends the session. */
+export const deleteAccount = () => deleteJson("/me");

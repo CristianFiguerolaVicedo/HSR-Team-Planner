@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { FolderHeart, LogIn, LogOut, UserRound } from "lucide-react";
+import { FolderHeart, LogIn, LogOut, ShieldCheck, UserRound, UserX } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useSession } from "../hooks/useSession";
+import DeleteAccountDialog from "./DeleteAccountDialog";
 
 /**
  * Header corner: "Sign in" with the configured providers, or the user's avatar with "Sign out".
@@ -11,6 +12,7 @@ import { useSession } from "../hooks/useSession";
 const AccountMenu = () => {
   const { status, user, providers, logout } = useSession();
   const [open, setOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const ref = useRef(null);
 
   // Close when clicking outside or pressing Esc
@@ -62,6 +64,15 @@ const AccountMenu = () => {
                 className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm text-text-secondary hover:text-accent-red hover:bg-accent-red-muted">
                 <LogOut size={16} /> Sign out
               </button>
+              <div className="my-1 border-t border-border" />
+              <Link to="/privacy" role="menuitem" onClick={() => setOpen(false)}
+                className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-text-secondary hover:text-text-primary hover:bg-bg-elevated">
+                <ShieldCheck size={16} /> Privacy
+              </Link>
+              <button type="button" role="menuitem" onClick={() => { setOpen(false); setDeleting(true); }}
+                className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm text-text-secondary hover:text-accent-red hover:bg-accent-red-muted">
+                <UserX size={16} /> Delete my account
+              </button>
             </>
           ) : (
             <>
@@ -72,10 +83,14 @@ const AccountMenu = () => {
                   <LogIn size={16} /> Continue with {provider.name}
                 </a>
               ))}
+              <Link to="/privacy" onClick={() => setOpen(false)} className="block px-2 pt-2 text-xs text-text-muted underline underline-offset-2">
+                What gets stored when you sign in
+              </Link>
             </>
           )}
         </div>
       )}
+      {deleting && <DeleteAccountDialog onClose={() => setDeleting(false)} />}
     </div>
   );
 };

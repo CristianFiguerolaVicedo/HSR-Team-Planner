@@ -89,6 +89,10 @@ const Layout = ({ children }) => (
     <LoginErrorBanner />
     <RosterSync />
     <main className="max-w-7xl mx-auto px-4 py-8">{children}</main>
+    <footer className="max-w-7xl mx-auto px-4 pb-8 text-xs text-text-muted flex flex-wrap gap-x-4 gap-y-1">
+      <NavLink to="/privacy" className="hover:text-text-primary underline underline-offset-2">Privacy</NavLink>
+      <span>Fan project, not affiliated with HoYoverse. Game data via HSRWiki.</span>
+    </footer>
     <WakingBanner />
   </div>
 );

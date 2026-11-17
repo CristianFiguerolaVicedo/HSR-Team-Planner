@@ -45,6 +45,16 @@ public class CurrentUserService {
         return principal instanceof OAuth2AuthenticationToken token ? current(token) : null;
     }
 
+    /**
+     * Deletes the logged-in user. The database does the rest in the same statement:
+     * user_roster and teams (with their slots) are ON DELETE CASCADE.
+     */
+    @Transactional
+    public void deleteAccount(OAuth2AuthenticationToken authentication) {
+        AuthenticatedUser info = identity(authentication);
+        users.findByProviderAndProviderId(info.provider(), info.providerId()).ifPresent(users::delete);
+    }
+
     static AuthenticatedUser identity(OAuth2AuthenticationToken authentication) {
         return AuthenticatedUser.from(authentication.getAuthorizedClientRegistrationId(),
                 authentication.getPrincipal().getAttributes());

@@ -1,7 +1,13 @@
 package com.crifigvic.hsrplanner.auth;
 
 import com.crifigvic.hsrplanner.account.CurrentUserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.web.authentication.logout.CookieClearingLogoutHandler;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +20,19 @@ import java.util.List;
 @RestController
 @RequestMapping("/api")
 public class AuthController {
+
+    /**
+     * "Delete my account and my data": the user, their saved characters and their teams.
+     * Under /api/me, so it needs a session and the CSRF token. Then the session ends, like a logout.
+     */
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteMe(OAuth2AuthenticationToken authentication,
+                                         HttpServletRequest request, HttpServletResponse response) {
+        currentUser.deleteAccount(authentication);
+        new SecurityContextLogoutHandler().logout(request, response, authentication);
+        new CookieClearingLogoutHandler("JSESSIONID").logout(request, response, authentication);
+        return ResponseEntity.noContent().build();
+    }
 
     /** Placeholder used in application.yml when a provider has no credentials. */
     static final String NOT_CONFIGURED = "not-configured";

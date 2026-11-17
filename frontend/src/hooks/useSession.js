@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useSyncExternalStore } from "react";
-import { getAuthProviders, getMe, logout as logoutRequest } from "../services/plannerService";
-import { flushAccountRoster } from "./useRoster";
+import { deleteAccount as deleteAccountRequest, getAuthProviders, getMe, logout as logoutRequest } from "../services/plannerService";
+import { flushAccountRoster, stopAccountRoster } from "./useRoster";
 
 /*
  * Who is logged in, shared by every component (same store pattern as useRoster / HSRWiki's useCollection).
@@ -58,5 +58,13 @@ export const useSession = () => {
     }
   }, []);
 
-  return { ...session, logout, refresh: refreshSession };
+  /** Deletes the account on the server. Throws if it failed, so the dialog can say so. */
+  const deleteAccount = useCallback(async () => {
+    await deleteAccountRequest();
+    // Nothing left to save: drop pending roster changes instead of sending them to a deleted account
+    stopAccountRoster();
+    setState({ status: "anonymous", user: null });
+  }, []);
+
+  return { ...session, logout, deleteAccount, refresh: refreshSession };
 };
