@@ -29,7 +29,9 @@ jobs:
         env:
           TOKEN: ${{ secrets.PLANNER_ADMIN_TOKEN }}
         # HSRWiki is on Render too and may need its own minute to wake up
+        # --fail-with-body: on an error, print what the server answered (403 = wrong token)
         run: |
-          curl -fsS --max-time 600 -X POST -H "X-Admin-Token: $TOKEN" \
+          if [ -z "$TOKEN" ]; then echo "Secret PLANNER_ADMIN_TOKEN is empty or missing"; exit 1; fi
+          curl -sS --fail-with-body --max-time 600 -X POST -H "X-Admin-Token: $TOKEN" \
             "${{ vars.PLANNER_API_URL }}/api/admin/sync"
           echo
