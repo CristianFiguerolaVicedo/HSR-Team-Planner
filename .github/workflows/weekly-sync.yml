@@ -29,9 +29,11 @@ jobs:
         env:
           TOKEN: ${{ secrets.PLANNER_ADMIN_TOKEN }}
         # HSRWiki is on Render too and may need its own minute to wake up
-        # --fail-with-body: on an error, print what the server answered (403 = wrong token)
+        # Prints what the server answered: 403 = wrong token, 503 = HSRWiki down, 409 = already running
         run: |
           if [ -z "$TOKEN" ]; then echo "Secret PLANNER_ADMIN_TOKEN is empty or missing"; exit 1; fi
-          curl -sS --fail-with-body --max-time 900 -X POST -H "X-Admin-Token: $TOKEN" \
-            "${{ vars.PLANNER_API_URL }}/api/admin/sync"
-          echo
+          status=$(curl -sS -o response.json -w "%{http_code}" --max-time 900 -X POST \
+            -H "X-Admin-Token: $TOKEN" "${{ vars.PLANNER_API_URL }}/api/admin/sync")
+          cat response.json; echo
+          if [ "$status" = "409" ]; then echo "A sync is already running on the server (e.g. after a deploy): nothing to do"; exit 0; fi
+          if [ "$status" -ge 400 ]; then echo "Sync failed with HTTP $status"; exit 1; fi

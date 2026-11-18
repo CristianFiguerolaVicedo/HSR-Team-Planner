@@ -106,7 +106,7 @@ All endpoints are under `/api`. Errors are `application/problem+json`.
 | GET | `/me/roster` | The logged-in user's "My characters": `{"1102": 2, ...}` (`401` without a session) |
 | PUT | `/me/roster` | Replaces it; unknown ids are dropped, Eidolons outside 0–6 are a `400` |
 | GET | `/import/{uid}` | Characters and Eidolons in a player's in-game showcase (Enka.Network, Mihomo as fallback) |
-| POST | `/admin/sync` | Re-sync the catalog now (header `X-Admin-Token`) |
+| POST | `/admin/sync` | Re-sync the catalog now (header `X-Admin-Token`); `409` if a sync is already running, `503` if HSRWiki doesn't answer |
 
 Team issues have a severity: `ERROR` (the game forbids it: duplicates, more than 4, two Trailblazers), `WARNING` (light cone of another Path, no sustain, no damage dealer) and `INFO` (two or more sustains).
 

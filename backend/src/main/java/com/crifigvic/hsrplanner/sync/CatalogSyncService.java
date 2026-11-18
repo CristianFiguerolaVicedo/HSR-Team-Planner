@@ -7,12 +7,14 @@ import com.crifigvic.hsrplanner.sync.HsrWikiDtos.CharacterJson;
 import com.crifigvic.hsrplanner.sync.HsrWikiDtos.LightConeJson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -31,16 +33,24 @@ public class CatalogSyncService {
     private final SynergyRepository synergies;
     private final CatalogOverrides overrides;
     private final Clock clock;
+    private final TransactionTemplate transaction;
     private final SynergyExtractor synergyExtractor = new SynergyExtractor();
+    /**
+     * One sync at a time. Two at once (the startup sync and POST /api/admin/sync, say) both read
+     * an empty table and both INSERT the same characters: duplicate key on characters_pkey.
+     */
+    private final ReentrantLock running = new ReentrantLock();
 
     public CatalogSyncService(HsrWikiClient hsrWiki, CharacterRepository characters, LightConeRepository lightCones,
-                              SynergyRepository synergies, ObjectMapper objectMapper, Clock clock) {
+                              SynergyRepository synergies, ObjectMapper objectMapper, Clock clock,
+                              PlatformTransactionManager transactionManager) {
         this.hsrWiki = hsrWiki;
         this.characters = characters;
         this.lightCones = lightCones;
         this.synergies = synergies;
         this.overrides = CatalogOverrides.load(objectMapper);
         this.clock = clock;
+        this.transaction = new TransactionTemplate(transactionManager);
     }
 
     public boolean catalogIsEmpty() {
@@ -48,18 +58,30 @@ public class CatalogSyncService {
     }
 
     /**
-     * Downloads first, then writes in one transaction: if HSRWiki is down nothing changes,
+     * Downloads first (outside any transaction: no database connection is held while HSRWiki
+     * wakes up), then writes everything in one transaction: if HSRWiki is down nothing changes,
      * and readers never see a half-updated catalog.
+     * The lock covers both steps and is released only after the commit, so the next sync always
+     * reads what this one wrote.
      */
-    @Transactional
     public SyncReport sync() {
-        Instant startedAt = Instant.now(clock);
-        log.info("Catalog sync started");
+        if (!running.tryLock()) {
+            throw new SyncInProgressException();
+        }
+        try {
+            Instant startedAt = Instant.now(clock);
+            log.info("Catalog sync started");
+            List<CharacterJson> characterJson = hsrWiki.characters();
+            List<LightConeJson> lightConeJson = hsrWiki.lightCones();
+            String gameVersion = hsrWiki.gameVersion();
+            return transaction.execute(status -> write(characterJson, lightConeJson, gameVersion, startedAt));
+        } finally {
+            running.unlock();
+        }
+    }
 
-        List<CharacterJson> characterJson = hsrWiki.characters();
-        List<LightConeJson> lightConeJson = hsrWiki.lightCones();
-        String gameVersion = hsrWiki.gameVersion();
-
+    private SyncReport write(List<CharacterJson> characterJson, List<LightConeJson> lightConeJson,
+                             String gameVersion, Instant startedAt) {
         List<String> skipped = new ArrayList<>();
         CharacterNames names = new CharacterNames();
         Map<Integer, Character> savedCharacters = upsertCharacters(characterJson, names, skipped, startedAt);
