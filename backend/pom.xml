@@ -43,6 +43,11 @@
             <artifactId>spring-boot-starter-security-oauth2-client</artifactId>
         </dependency>
         <dependency>
+            <!-- Sessions stored in PostgreSQL: logins survive restarts (free hosting sleeps when idle) -->
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-session-jdbc</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-database-postgresql</artifactId>
         </dependency>

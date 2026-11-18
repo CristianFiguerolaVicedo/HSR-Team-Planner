@@ -1,0 +1,43 @@
+# Render Blueprint for the backend (Dashboard → New → Blueprint → this repo).
+# Free web service: sleeps after ~15 min without traffic and takes about a minute to wake up.
+# The database is NOT here: it's a free Neon PostgreSQL (Render's free database expires after 30 days).
+services:
+  - type: web
+    name: hsr-team-planner-api
+    runtime: docker
+    plan: free
+    region: frankfurt          # next to Neon's Frankfurt region (aws eu-central-1)
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeploy: true           # every push to main redeploys
+    envVars:
+      # --- Neon (direct connection, NOT the "-pooler" host): jdbc:postgresql://<host>/<db>?sslmode=require
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      # --- The site's public address (Vercel), without a trailing slash: https://<project>.vercel.app
+      - key: PUBLIC_URL
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      # --- OAuth apps (production redirect URIs: <PUBLIC_URL>/login/oauth2/code/discord | google)
+      - key: DISCORD_CLIENT_ID
+        sync: false
+      - key: DISCORD_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      # --- Fixed values
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
+      - key: SYNC_CRON
+        value: "-"             # a sleeping server can't run a cron: GitHub Actions calls /api/admin/sync instead
+      - key: ADMIN_TOKEN
+        generateValue: true    # copy it into the GitHub secret PLANNER_ADMIN_TOKEN

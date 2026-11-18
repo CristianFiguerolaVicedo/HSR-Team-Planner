@@ -50,7 +50,9 @@ const Privacy = () => {
         </ul>
         <p>
           It does <span className="font-semibold text-text-primary">not</span> ask for or store your email, and it
-          doesn't keep the Discord or Google access tokens. The session is a cookie that ends when you sign out.
+          doesn't save the Discord or Google access tokens. You stay signed in through a session cookie; the session
+          itself is kept in the database (so a server restart doesn't sign you out) and is deleted when you sign out,
+          delete your account, or after 30 days without visits.
         </p>
       </Section>
 

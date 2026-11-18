@@ -1,0 +1,35 @@
+# Weekly catalog sync. The backend's own cron can't run while Render has it asleep,
+# so GitHub wakes it up and calls the admin endpoint. HSRWiki refreshes on Wednesdays
+# at 18:00 UTC; this runs at 19:30 UTC. Also runnable by hand (Actions → Weekly sync → Run workflow).
+#
+# Needs, in the repo's Settings → Secrets and variables → Actions:
+#   variable PLANNER_API_URL   = https://hsr-team-planner-api.onrender.com   (the Render URL, not Vercel's)
+#   secret   PLANNER_ADMIN_TOKEN = the ADMIN_TOKEN value from Render
+name: Weekly sync
+
+on:
+  schedule:
+    - cron: "30 19 * * 3"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Wake up the backend
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS --max-time 20 "${{ vars.PLANNER_API_URL }}/api/health"; then echo; exit 0; fi
+            echo "Not up yet ($i), waiting..."; sleep 10
+          done
+          echo "Backend did not wake up"; exit 1
+
+      - name: Sync the catalog from HSRWiki
+        env:
+          TOKEN: ${{ secrets.PLANNER_ADMIN_TOKEN }}
+        # HSRWiki is on Render too and may need its own minute to wake up
+        run: |
+          curl -fsS --max-time 600 -X POST -H "X-Admin-Token: $TOKEN" \
+            "${{ vars.PLANNER_API_URL }}/api/admin/sync"
+          echo

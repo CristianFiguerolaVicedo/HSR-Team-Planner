@@ -8,7 +8,7 @@
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
 
-> Status: **MVP and phase 2 complete**. Catalog, "My characters", team builder with live validation, SPD calculator, share links, rule-based recommender, import by UID and optional Discord/Google login (characters and teams kept in your account). Next: deployment.
+> Status: **MVP and phase 2 complete**. Catalog, "My characters", team builder with live validation, SPD calculator, share links, rule-based recommender, import by UID and optional Discord/Google login (characters and teams kept in your account). Next: deployment on Vercel + Render + Neon (free plans), see [Deployment](#deployment).
 
 ## Sister project: HSRWiki
 
@@ -128,9 +128,9 @@ Score = **synergy** (pairs recommended together in HSRWiki's guides) + **roles**
 
 ## Login (Discord / Google)
 
-Optional: everything works without an account. Login uses Spring Security's OAuth2 client with the **authorization code** flow and a **server session** (HttpOnly `JSESSIONID` cookie), so no token ever reaches JavaScript. Only the provider id, display name and avatar are read (`identify` on Discord, `openid profile` on Google): no email.
+Optional: everything works without an account. Login uses Spring Security's OAuth2 client with the **authorization code** flow and a **server session** (HttpOnly `JSESSIONID` cookie), so no token ever reaches JavaScript. Sessions are stored in PostgreSQL with Spring Session JDBC (Flyway V7), so a restart or a sleeping free server doesn't sign anyone out; deleting an account also ends its sessions on other devices. Only the provider id, display name and avatar are read (`identify` on Discord, `openid profile` on Google): no email.
 
-The site and the API share one origin: Vite forwards `/api`, `/oauth2` and `/login/oauth2` to the backend in development, and Vercel will do the same in production. That keeps the session and CSRF cookies first-party. Because the session is a cookie, every POST/PUT/DELETE carries a CSRF token: Spring writes it to the `XSRF-TOKEN` cookie and axios sends it back in the `X-XSRF-TOKEN` header.
+The site and the API share one origin: Vite forwards `/api`, `/oauth2` and `/login/oauth2` to the backend in development, and Vercel does the same in production (`frontend/vercel.json`). That keeps the session and CSRF cookies first-party. Because the session is a cookie, every POST/PUT/DELETE carries a CSRF token: Spring writes it to the `XSRF-TOKEN` cookie and axios sends it back in the `X-XSRF-TOKEN` header.
 
 Local setup:
 
@@ -182,13 +182,24 @@ npm run lint
 | `ENKA_URL` / `MIHOMO_URL` | `https://enka.network` / `https://api.mihomo.me` | UID import providers |
 | `ADMIN_TOKEN` | empty (admin disabled) | Token for `POST /api/admin/sync` |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:5173,http://localhost:4173` | Frontend origins |
+| `PUBLIC_URL` | empty (relative URLs) | Public address of the site in production (`https://….vercel.app`): OAuth redirect URIs and where to land after login |
+| `SESSION_TIMEOUT` | `30d` | How long a login lasts without visits |
+| `DB_POOL_SIZE` | `5` | Database connections |
 | `VITE_API_BASE_URL` (frontend) | `/api` (same origin) | Leave unset: login needs the same-origin proxy |
 
 ## Deployment
 
-Planned: frontend on **Vercel**, backend on **Railway or Fly.io** with a managed PostgreSQL. Checklist:
+Free setup: frontend on **Vercel**, backend on **Render** (free web service, Docker), database on **Neon** (free PostgreSQL). The browser only ever talks to Vercel; `frontend/vercel.json` forwards `/api`, `/oauth2` and `/login/oauth2` to Render, so cookies stay first-party exactly like with the Vite proxy.
 
-1. **Backend**: deploy `backend/Dockerfile`. Set `SPRING_DATASOURCE_URL` in JDBC form (`jdbc:postgresql://host:port/db`; Railway shows `postgresql://…`), `_USERNAME`, `_PASSWORD`, `SESSION_COOKIE_SECURE=true`, `ADMIN_TOKEN` and the OAuth ids/secrets.
-2. **Frontend**: Vercel project with root directory `frontend`. Leave `VITE_API_BASE_URL` **unset** and add rewrites in `vercel.json` that forward `/api/*`, `/oauth2/*` and `/login/oauth2/*` to the backend (before the existing rule that sends every route to `index.html`). Same origin is what keeps login cookies working.
-3. **OAuth**: add the production redirect URIs `https://<planner-domain>/login/oauth2/code/discord` and `.../google` in the Discord Developer Portal and Google Auth Platform.
-4. **HSRWiki**: in the HSRWiki Vercel project, set `VITE_TEAM_PLANNER_URL=https://<planner-domain>` and **redeploy** (Vite reads it at build time). Until then the wiki hides its links to the planner.
+```
+browser ──► https://<project>.vercel.app ──(rewrites)──► https://hsr-team-planner-api.onrender.com ──► Neon PostgreSQL
+```
+
+Trade-off of the free plan: Render puts the backend to sleep after ~15 minutes without traffic, and the first request then waits about a minute (the site shows "Waking up the server…" and retries). Sessions live in the database, so sleeping doesn't sign anyone out.
+
+1. **Neon**: create a project (region Frankfurt). From *Connect*, take the **direct** connection (not the `-pooler` host) and write it in JDBC form: `jdbc:postgresql://<host>/<db>?sslmode=require`, plus the user and password separately. Flyway creates every table on the first start.
+2. **Render**: *New → Blueprint* with this repo; `render.yaml` describes the service (Docker, `backend/`, free plan, health check `/api/health`). Fill in the variables it asks for: `SPRING_DATASOURCE_*`, `PUBLIC_URL` and `CORS_ALLOWED_ORIGINS` (both the Vercel address, no trailing slash) and the OAuth ids/secrets. `SESSION_COOKIE_SECURE=true`, `SYNC_CRON=-` and a generated `ADMIN_TOKEN` are set by the blueprint. If the service gets another address than `hsr-team-planner-api.onrender.com`, change it in `frontend/vercel.json`.
+3. **Vercel**: new project from this repo, root directory `frontend` (Vite is detected). Leave `VITE_API_BASE_URL` unset.
+4. **OAuth**: add `https://<project>.vercel.app/login/oauth2/code/discord` and `.../google` as redirect URIs in the Discord Developer Portal and Google Auth Platform (keep the localhost ones for development).
+5. **Weekly sync**: a sleeping server can't run its own cron, so `.github/workflows/weekly-sync.yml` wakes it up every Wednesday at 19:30 UTC and calls `POST /api/admin/sync`. It needs the repository variable `PLANNER_API_URL` (the Render address) and the secret `PLANNER_ADMIN_TOKEN` (the `ADMIN_TOKEN` from Render). GitHub pauses scheduled workflows after 60 days without commits; *Run workflow* also works by hand.
+6. **HSRWiki**: in the HSRWiki Vercel project, set `VITE_TEAM_PLANNER_URL=https://<project>.vercel.app` and **redeploy** (Vite reads it at build time). Until then the wiki hides its links to the planner.

@@ -9,6 +9,12 @@ spring:
     url: jdbc:postgresql://localhost:5432/hsrplanner
     username: hsrplanner
     password: hsrplanner
+    hikari:
+      # Free plans: little memory on the app, few connections on the database
+      maximum-pool-size: ${DB_POOL_SIZE:5}
+  session:
+    jdbc:
+      initialize-schema: never   # tables created by Flyway (V7)
   jpa:
     open-in-view: false
     hibernate:
@@ -27,12 +33,13 @@ spring:
             client-secret: ${DISCORD_CLIENT_SECRET:not-configured}
             client-authentication-method: client_secret_post
             authorization-grant-type: authorization_code
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            redirect-uri: "${PUBLIC_URL:{baseUrl}}/login/oauth2/code/{registrationId}"
             scope: identify              # id, username and avatar only (no email)
           google:
             client-name: Google
             client-id: ${GOOGLE_CLIENT_ID:not-configured}
             client-secret: ${GOOGLE_CLIENT_SECRET:not-configured}
+            redirect-uri: "${PUBLIC_URL:{baseUrl}}/login/oauth2/code/{registrationId}"
             scope: openid, profile       # name and picture only (no email)
         provider:
           # Google is built into Spring; Discord has to be described by hand
@@ -48,7 +55,12 @@ server:
   forward-headers-strategy: framework
   servlet:
     session:
+      # Stay signed in for a month of inactivity (the session is in the database, see V7)
+      timeout: ${SESSION_TIMEOUT:30d}
       cookie:
+        # Spring Session would call it SESSION; keep the name the logout code clears
+        name: JSESSIONID
+        max-age: ${SESSION_TIMEOUT:30d}
         http-only: true
         same-site: lax
         secure: ${SESSION_COOKIE_SECURE:false}   # true in production (HTTPS)
@@ -66,9 +78,12 @@ planner:
   admin:
     token: ${ADMIN_TOKEN:}   # blank = POST /api/admin/sync disabled
   auth:
-    # Where the browser lands after logging in (relative = same site, through the proxy)
-    success-url: ${AUTH_SUCCESS_URL:/}
-    failure-url: ${AUTH_FAILURE_URL:/?login=error}
+    # Where the browser lands after logging in. Locally PUBLIC_URL is unset, so these stay relative
+    # (same site, through the Vite proxy). In production PUBLIC_URL is the site's address
+    # (https://….vercel.app): the backend sits behind Vercel's rewrites, and absolute URLs
+    # don't depend on which Host header the proxy passes on.
+    success-url: ${AUTH_SUCCESS_URL:${PUBLIC_URL:}/}
+    failure-url: ${AUTH_FAILURE_URL:${PUBLIC_URL:}/?login=error}
   importer:
     enka-url: ${ENKA_URL:https://enka.network}
     mihomo-url: ${MIHOMO_URL:https://api.mihomo.me}
