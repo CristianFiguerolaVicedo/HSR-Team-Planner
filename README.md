@@ -8,7 +8,7 @@
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
 
-> Status: **MVP and phase 2 complete**. Catalog, "My characters", team builder with live validation, SPD calculator, share links, rule-based recommender, import by UID and optional Discord/Google login (characters and teams kept in your account). Next: deployment on Vercel + Render + Neon (free plans), see [Deployment](#deployment).
+> Status: **MVP and phase 2 complete**. Catalog, "My characters", team builder with live validation, SPD calculator, share links, rule-based recommender, import by UID and optional Discord/Google login (characters and teams kept in your account). Deployed for free on Vercel + Render + Neon, see [Deployment](#deployment).
 
 ## Sister project: HSRWiki
 
@@ -36,7 +36,7 @@ HSR-Team-Planner/
 ├── backend/                         Spring Boot API (Java 21)
 │   ├── src/main/java/com/crifigvic/hsrplanner/
 │   │   ├── catalog/                 Character, LightCone, Synergy + read endpoints
-│   │   ├── sync/                    HSRWiki client, catalog sync, synergy extraction
+│   │   ├── sync/                    HSRWiki client (with retries), catalog sync, synergy extraction
 │   │   ├── team/                    Team, TeamSlot, share codes, endpoints
 │   │   │   └── validation/          Team rules (pure Java, no Spring)
 │   │   ├── spd/                     SPD calculator (pure Java) + endpoint
@@ -44,19 +44,24 @@ HSR-Team-Planner/
 │   │   ├── importer/                Import by UID from Enka.Network / Mihomo
 │   │   ├── auth/                    Spring Security: OAuth2 login, CSRF for the SPA
 │   │   ├── account/                 Users and their saved "My characters"
-│   │   ├── config/                  Properties, CORS, clock, scheduling
+│   │   ├── config/                  Properties, CORS, clock, scheduling, health check
 │   │   └── common/                  Error handling (RFC 9457 problem details)
 │   ├── src/main/resources/
-│   │   ├── db/migration/            Flyway migrations
+│   │   ├── db/migration/            Flyway migrations (V1–V7, sessions included)
 │   │   └── catalog/overrides.json   Manual roles, aliases and variant groups
-│   └── src/test/java/...            JUnit 5 tests
+│   ├── src/test/java/...            JUnit 5 tests
+│   └── Dockerfile                   Image for Render (or any Docker host)
 ├── frontend/                        React + Vite + Tailwind CSS (same setup as HSRWiki-frontend)
-│   └── src/
-│       ├── pages/                   One page per route (lazy-loaded)
-│       ├── components/              Cards, filters, character detail, layout
-│       ├── hooks/                   Data (characters, light cones, teams), roster and draft stores, debounced checks
-│       ├── services/                axios client with retries + one function per endpoint
-│       └── util/                    Pure logic (filters, roster, game labels) + node --test tests
+│   ├── src/
+│   │   ├── pages/                   One page per route (lazy-loaded)
+│   │   ├── components/              Cards, filters, character detail, layout
+│   │   ├── hooks/                   Data (characters, light cones, teams), roster and draft stores, debounced checks
+│   │   ├── services/                axios client with retries + one function per endpoint
+│   │   └── util/                    Pure logic (filters, roster, game labels) + node --test tests
+│   ├── public/                      Favicon and phone home-screen icon
+│   └── vercel.json                  Rewrites /api, /oauth2, /login/oauth2 to the backend
+├── .github/workflows/weekly-sync.yml  Wakes the backend and syncs the catalog every Wednesday
+├── render.yaml                      Render Blueprint for the backend
 └── docker-compose.yml               Local PostgreSQL
 ```
 
@@ -147,8 +152,13 @@ Local setup:
 `CatalogSyncService` downloads `/api/characters`, `/api/lightcones` and `/api/version` from HSRWiki, then writes everything in one transaction (if HSRWiki is down, nothing changes). It runs:
 
 - at startup when the catalog is empty (`SYNC_ON_STARTUP=always|if-empty|never`),
-- every Wednesday at 19:00 UTC, an hour after HSRWiki refreshes its data (`SYNC_CRON`),
+- every Wednesday at 19:00 UTC, an hour after HSRWiki refreshes its data (`SYNC_CRON`); in production a GitHub Actions workflow does it instead, because Render's free plan puts the server to sleep (see [Deployment](#deployment)),
 - on demand with `POST /api/admin/sync`.
+
+Two details make it safe on free hosting:
+
+- **Retries:** HSRWiki is on Render's free plan too, and while it wakes up it answers 502/503 or times out. `HsrWikiClient` retries those errors every 10 s for up to 4 minutes (`Retrier`, plain Java, tested with a fake clock); other errors fail at once. The download happens before the transaction opens, so no database connection is held while waiting.
+- **One sync at a time:** a lock covers the whole sync and is released after the commit. A second sync (say, the startup one and the weekly workflow right after a deploy) gets `409` instead of inserting the same characters twice.
 
 Synergies come from HSRWiki's recommended teams: a fixed team member adds 2 to the pair, each option of an "A / B" slot adds 1, and placeholders like "Any Sustain" are skipped. `catalog/overrides.json` holds the roles of every character and the damage tags of damage dealers and break supports, reviewed by hand (new characters get a default from their Path until they're added), maps short names used by the guides ("Topaz") and adds variant groups.
 
