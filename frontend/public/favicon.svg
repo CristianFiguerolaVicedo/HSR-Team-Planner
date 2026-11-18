@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- HSR Team Planner: a team of four slots on the "notebook cover" navy, one slot marked with a star -->
+  <rect width="64" height="64" rx="14" fill="#1F2A44"/>
+  <rect x="9" y="9" width="21" height="21" rx="5" fill="#2F6FAE"/>
+  <rect x="34" y="9" width="21" height="21" rx="5" fill="#D24A7C"/>
+  <rect x="9" y="34" width="21" height="21" rx="5" fill="#E0A82E"/>
+  <rect x="34" y="34" width="21" height="21" rx="5" fill="#FBF7EE"/>
+  <path d="M44.5 37 C45.6 42.4 46.6 43.4 52 44.5 C46.6 45.6 45.6 46.6 44.5 52 C43.4 46.6 42.4 45.6 37 44.5 C42.4 43.4 43.4 42.4 44.5 37 Z" fill="#D24A7C"/>
+</svg>
