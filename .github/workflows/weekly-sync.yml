@@ -15,7 +15,7 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Wake up the backend
         run: |
@@ -32,6 +32,6 @@ jobs:
         # --fail-with-body: on an error, print what the server answered (403 = wrong token)
         run: |
           if [ -z "$TOKEN" ]; then echo "Secret PLANNER_ADMIN_TOKEN is empty or missing"; exit 1; fi
-          curl -sS --fail-with-body --max-time 600 -X POST -H "X-Admin-Token: $TOKEN" \
+          curl -sS --fail-with-body --max-time 900 -X POST -H "X-Admin-Token: $TOKEN" \
             "${{ vars.PLANNER_API_URL }}/api/admin/sync"
           echo
