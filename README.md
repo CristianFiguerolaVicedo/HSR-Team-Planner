@@ -2,13 +2,19 @@
 
 **Plan Honkai: Star Rail teams with the characters you own, check SPD breakpoints and share builds with a link.**
 
+[Live site](https://hsr-team-planner.vercel.app) ·
+[HSRWiki](https://hsr-wiki-frontend.vercel.app) ·
+[What it does](#what-it-does) ·
+[Running locally](#running-locally) ·
+[Deployment](#deployment)
+
 ![Java](https://img.shields.io/badge/Java-21-1F2A44?logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0-6DB33F?logo=springboot&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169E1?logo=postgresql&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
 
-> Status: **MVP and phase 2 complete**. Catalog, "My characters", team builder with live validation, SPD calculator, share links, rule-based recommender, import by UID and optional Discord/Google login (characters and teams kept in your account). Deployed for free on Vercel + Render + Neon, see [Deployment](#deployment).
+> Status: **MVP and phase 2 complete**. Catalog, "My characters", team builder with live validation, SPD calculator, share links, rule-based recommender, import by UID and optional Discord/Google login (characters and teams kept in your account). Live at **[hsr-team-planner.vercel.app](https://hsr-team-planner.vercel.app)**, deployed for free on Vercel + Render + Neon (see [Deployment](#deployment)).
 
 ## Sister project: HSRWiki
 
