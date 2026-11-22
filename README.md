@@ -211,7 +211,11 @@ Free setup: frontend on **Vercel**, backend on **Render** (free web service, Doc
 browser ──► https://<project>.vercel.app ──(rewrites)──► https://hsr-team-planner-api.onrender.com ──► Neon PostgreSQL
 ```
 
-Trade-off of the free plan: Render puts the backend to sleep after ~15 minutes without traffic, and the first request then waits about a minute (the site shows "Waking up the server…" and retries). Sessions live in the database, so sleeping doesn't sign anyone out.
+Trade-off of the free plan: Render puts the backend to sleep after ~15 minutes without traffic, and the first request then has to wait for it to start (the site shows "Waking up the server…" and retries). Sessions live in the database, so sleeping doesn't sign anyone out. Three things keep that wait short:
+
+- **Fast start-up:** the Docker image unpacks the jar, uses only the fast JIT compiler and ships a CDS archive (classes already parsed, made with a training run while the image is built; that run skips the database, which doesn't exist at build time). About 8 seconds to start instead of 28 on a comparable machine.
+- **Saved catalog:** the browser keeps the last list of characters and light cones (`useCachedResource`), so the catalog and the builder show up at once and refresh quietly in the background.
+- **Keep-alive:** an external monitor ([cron-job.org](https://cron-job.org)) calls `GET /api/health` every 10 minutes during the day, so the server rarely sleeps while people use it. Render's 750 free hours a month are shared by every free service in the account; one service awake all month uses 720–744 of them, so the monitor pauses at night to leave a margin for HSRWiki's API.
 
 1. **Neon**: create a project (region Frankfurt). From *Connect*, take the **direct** connection (not the `-pooler` host) and write it in JDBC form: `jdbc:postgresql://<host>/<db>?sslmode=require`, plus the user and password separately. Flyway creates every table on the first start.
 2. **Render**: *New → Blueprint* with this repo; `render.yaml` describes the service (Docker, `backend/`, free plan, health check `/api/health`). Fill in the variables it asks for: `SPRING_DATASOURCE_*`, `PUBLIC_URL` and `CORS_ALLOWED_ORIGINS` (both the Vercel address, no trailing slash) and the OAuth ids/secrets. `SESSION_COOKIE_SECURE=true`, `SYNC_CRON=-` and a generated `ADMIN_TOKEN` are set by the blueprint. If the service gets another address than `hsr-team-planner-api.onrender.com`, change it in `frontend/vercel.json`.

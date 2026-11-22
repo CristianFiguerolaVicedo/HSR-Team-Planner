@@ -57,8 +57,9 @@ const retryable = (err) => {
   return !err.response || status === 502 || status === 503 || status === 504;
 };
 
-export const fetchJson = async (url) => {
-  started();
+/** GET with retries while the server wakes up. quiet: don't show the "waking up" banner (background refreshes). */
+export const fetchJson = async (url, { quiet = false } = {}) => {
+  if (!quiet) started();
   try {
     const start = Date.now();
     for (;;) {
@@ -71,7 +72,7 @@ export const fetchJson = async (url) => {
       }
     }
   } finally {
-    finished();
+    if (!quiet) finished();
   }
 };
 

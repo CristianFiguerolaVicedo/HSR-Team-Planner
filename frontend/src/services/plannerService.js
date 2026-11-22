@@ -2,12 +2,12 @@ import { deleteJson, fetchJson, getOnce, postJson, putJson } from "./apiClient";
 
 // One function per backend endpoint (see README → API)
 
-export const getCharacters = () => fetchJson("/characters");
+export const getCharacters = (quiet = false) => fetchJson("/characters", { quiet });
 
 export const getSynergies = (characterId, limit = 8) =>
   fetchJson(`/characters/${characterId}/synergies?limit=${limit}`);
 
-export const getLightcones = () => fetchJson("/lightcones");
+export const getLightcones = (quiet = false) => fetchJson("/lightcones", { quiet });
 
 export const getSpd = (speed, cycles = 3) => fetchJson(`/spd?speed=${speed}&cycles=${cycles}`);
 
