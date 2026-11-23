@@ -41,7 +41,8 @@ public class SecurityConfig {
 
                 .oauth2Login(login -> login
                         .defaultSuccessUrl(auth.successUrl(), true)
-                        .failureUrl(auth.failureUrl()))
+                        // Logs why it failed and tells the site (?reason=<OAuth2 error code>)
+                        .failureHandler(new LoginFailureHandler(auth.failureUrl())))
 
                 // An API answers 401; it never redirects a fetch() to an HTML login page
                 .exceptionHandling(errors -> errors

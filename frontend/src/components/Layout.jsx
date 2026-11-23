@@ -33,8 +33,11 @@ const WakingBanner = () => {
 
 /** Shown when Discord/Google sent the user back with an error (the backend redirects to /?login=error). */
 const LoginErrorBanner = () => {
-  const [visible, setVisible] = useState(() => new URLSearchParams(window.location.search).get("login") === "error");
+  const [params] = useState(() => new URLSearchParams(window.location.search));
+  const [visible, setVisible] = useState(() => params.get("login") === "error");
   if (!visible) return null;
+  // OAuth2 error code from the backend (letters, digits and _ only), shown small to help diagnose
+  const reason = (params.get("reason") || "").replace(/[^A-Za-z0-9_]/g, "");
   const close = () => {
     setVisible(false);
     window.history.replaceState(null, "", window.location.pathname); // drop ?login=error
@@ -42,7 +45,8 @@ const LoginErrorBanner = () => {
   return (
     <div role="alert" className="max-w-7xl mx-auto mt-4 px-4">
       <div className="glass-panel p-3 flex items-center gap-3 text-sm">
-        <span className="flex-1"><span className="font-semibold text-accent-red">Sign in didn't work.</span> Try again, or keep using the planner without an account.</span>
+        <span className="flex-1"><span className="font-semibold text-accent-red">Sign in didn't work.</span> Try again, or keep using the planner without an account.
+          {reason && <span className="ml-2 font-mono text-xs text-text-muted">({reason})</span>}</span>
         <button type="button" onClick={close} aria-label="Dismiss" className="p-1 rounded text-text-muted hover:text-text-primary"><X size={16} /></button>
       </div>
     </div>
