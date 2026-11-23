@@ -143,15 +143,19 @@ Optional: everything works without an account. Login uses Spring Security's OAut
 
 The site and the API share one origin: Vite forwards `/api`, `/oauth2` and `/login/oauth2` to the backend in development, and Vercel does the same in production (`frontend/vercel.json`). That keeps the session and CSRF cookies first-party. Because the session is a cookie, every POST/PUT/DELETE carries a CSRF token: Spring writes it to the `XSRF-TOKEN` cookie and axios sends it back in the `X-XSRF-TOKEN` header.
 
+Behind Vercel's rewrites the backend sees its own Render host, while the browser sends `Origin: https://….vercel.app` on writes, so Spring checks those requests as cross-origin. `CorsOrigins` always allows `PUBLIC_URL`, strips trailing slashes from the configured origins (an origin has no path, so `https://x.vercel.app/` would never match) and the mapping allows GET, POST, PUT and DELETE.
+
+**When login fails**, `LoginFailureHandler` logs the OAuth2 error code and message (`Login failed (<code>): …`) and redirects to `/?login=error&reason=<code>`; the banner shows the code in small print. Only the code (letters, digits and `_`) goes in the URL, never the message.
+
 Local setup:
 
 1. Create an application in the [Discord Developer Portal](https://discord.com/developers/applications) (OAuth2 → copy Client ID, reset and copy Client Secret, add the redirect `http://localhost:5173/login/oauth2/code/discord`) and/or an OAuth client in Google Cloud (Google Auth Platform → Branding, Audience with yourself as test user, Clients → Web application, redirect `http://localhost:5173/login/oauth2/code/google`).
 2. `cp backend/.env.example backend/.env` and fill in the ids and secrets. `backend/.env` is git-ignored.
 3. Open the site through Vite (`http://localhost:5173`), not the API port. Providers without credentials are hidden.
 
-**What an account keeps:** "My characters" moves from the browser to the account (`users` and `user_roster` tables, Flyway V4), so it follows you to every device. Teams saved while logged in get an owner: "My teams" lists them, and only the owner can edit them in place or delete them (`TeamPermissions`, checked on the server; teams saved without an account can't be changed by anyone).
+**What an account keeps:** "My characters" moves from the browser to the account (`users` and `user_roster` tables, Flyway V4), so it follows you to every device. Teams saved while logged in get an owner: "My teams" lists them, and only the owner can edit them in place or delete them (`TeamPermissions`, checked on the server; teams saved without an account can't be changed by anyone). Changes are shown at once and saved a moment later with a `PUT` of the whole roster; the browser's own roster is left untouched and comes back after logging out. The first time you log in with characters in the browser that the account lacks, the site asks whether to add them. Users are created with a PostgreSQL upsert (`ON CONFLICT`), and whose data it is always comes from the session, never from the request.
 
-**Privacy:** `/privacy` explains in plain words what is stored and where. "Delete my account" (account menu or privacy page, confirmed by typing DELETE) calls `DELETE /api/me`; the database removes the saved characters and the teams with it (`ON DELETE CASCADE`, Flyway V6), so their links stop working. "Clear this browser's data" wipes what the site keeps in local storage. Changes are shown at once and saved a moment later with a `PUT` of the whole roster; the browser's own roster is left untouched and comes back after logging out. The first time you log in with characters in the browser that the account lacks, the site asks whether to add them. Users are created with a PostgreSQL upsert (`ON CONFLICT`), and whose data it is always comes from the session, never from the request.
+**Privacy:** `/privacy` explains in plain words what is stored and where. "Delete my account" (account menu or privacy page, confirmed by typing DELETE) calls `DELETE /api/me`; the database removes the saved characters and the teams with it (`ON DELETE CASCADE`, Flyway V6), so their links stop working. "Clear this browser's data" wipes what the site keeps in local storage.
 
 ## Catalog sync
 
@@ -197,7 +201,7 @@ npm run lint
 | `SESSION_COOKIE_SECURE` | `false` | `true` in production (HTTPS only cookie) |
 | `ENKA_URL` / `MIHOMO_URL` | `https://enka.network` / `https://api.mihomo.me` | UID import providers |
 | `ADMIN_TOKEN` | empty (admin disabled) | Token for `POST /api/admin/sync` |
-| `CORS_ALLOWED_ORIGINS` | `http://localhost:5173,http://localhost:4173` | Frontend origins |
+| `CORS_ALLOWED_ORIGINS` | `http://localhost:5173,http://localhost:4173` | Extra frontend origins (`PUBLIC_URL` is always allowed; trailing slashes are removed) |
 | `PUBLIC_URL` | empty (relative URLs) | Public address of the site in production (`https://….vercel.app`): OAuth redirect URIs and where to land after login |
 | `SESSION_TIMEOUT` | `30d` | How long a login lasts without visits |
 | `DB_POOL_SIZE` | `5` | Database connections |
@@ -220,6 +224,21 @@ Trade-off of the free plan: Render puts the backend to sleep after ~15 minutes w
 1. **Neon**: create a project (region Frankfurt). From *Connect*, take the **direct** connection (not the `-pooler` host) and write it in JDBC form: `jdbc:postgresql://<host>/<db>?sslmode=require`, plus the user and password separately. Flyway creates every table on the first start.
 2. **Render**: *New → Blueprint* with this repo; `render.yaml` describes the service (Docker, `backend/`, free plan, health check `/api/health`). Fill in the variables it asks for: `SPRING_DATASOURCE_*`, `PUBLIC_URL` and `CORS_ALLOWED_ORIGINS` (both the Vercel address, no trailing slash) and the OAuth ids/secrets. `SESSION_COOKIE_SECURE=true`, `SYNC_CRON=-` and a generated `ADMIN_TOKEN` are set by the blueprint. If the service gets another address than `hsr-team-planner-api.onrender.com`, change it in `frontend/vercel.json`.
 3. **Vercel**: new project from this repo, root directory `frontend` (Vite is detected). Leave `VITE_API_BASE_URL` unset.
-4. **OAuth**: add `https://<project>.vercel.app/login/oauth2/code/discord` and `.../google` as redirect URIs in the Discord Developer Portal and Google Auth Platform (keep the localhost ones for development).
+4. **OAuth**: add `https://<project>.vercel.app/login/oauth2/code/discord` and `.../google` as redirect URIs in the Discord Developer Portal (remember *Save Changes*) and Google Auth Platform (keep the localhost ones for development). On Google, fill in *Branding* (app name, support email, home page and `/privacy` as privacy policy, the Vercel domain as authorized domain; no logo, which would require verification) and then *Audience → Publish app*, or only test users can sign in.
 5. **Weekly sync**: a sleeping server can't run its own cron, so `.github/workflows/weekly-sync.yml` wakes it up every Wednesday at 19:30 UTC and calls `POST /api/admin/sync`. It needs the repository variable `PLANNER_API_URL` (the Render address) and the secret `PLANNER_ADMIN_TOKEN` (the `ADMIN_TOKEN` from Render). GitHub pauses scheduled workflows after 60 days without commits; *Run workflow* also works by hand.
 6. **HSRWiki**: in the HSRWiki Vercel project, set `VITE_TEAM_PLANNER_URL=https://<project>.vercel.app` and **redeploy** (Vite reads it at build time). Until then the wiki hides its links to the planner.
+
+### Troubleshooting
+
+Problems met while deploying, and what each one meant:
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Startup fails with `defaultTarget must start with '/' or with 'http(s)'` | `PUBLIC_URL` without `https://` | Set it to the full address, `https://<project>.vercel.app` |
+| Discord shows "invalid OAuth2 redirect_uri" | The production redirect isn't registered in the Discord app | Add `<PUBLIC_URL>/login/oauth2/code/discord` and *Save Changes* |
+| Banner says `(invalid_token_response)`; Render log: `invalid_client … client secret is invalid` | `GOOGLE_CLIENT_SECRET` in Render is wrong (spaces, swapped with the id, or an old secret) | Copy the secret again from Google Cloud → Credentials and save it in Render |
+| Google says only test users can sign in | The app is still in *Testing* | *Branding* filled in, then *Audience → Publish app* |
+| `403` on `POST /api/teams/validate` and other writes | Origin not allowed (fixed in code: `PUBLIC_URL` is always allowed, PUT/DELETE included) | Redeploy; check `PUBLIC_URL` |
+| Weekly sync: `500` with `duplicate key … characters_pkey` | Two syncs at once (startup + workflow) | Fixed in code: one sync at a time, the second gets `409` |
+| Weekly sync: `500` / `502 Bad Gateway` from HSRWiki | HSRWiki's free server was waking up | Fixed in code: retries for up to 4 minutes; `503` if it never answers |
+| Weekly sync: `403` | `PLANNER_ADMIN_TOKEN` doesn't match Render's `ADMIN_TOKEN` | Paste it again as a repository *secret* |
