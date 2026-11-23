@@ -1,5 +1,6 @@
 package com.crifigvic.hsrplanner.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -13,9 +14,11 @@ import java.time.Clock;
 public class AppConfig implements WebMvcConfigurer {
 
     private final PlannerProperties properties;
+    private final String publicUrl;
 
-    public AppConfig(PlannerProperties properties) {
+    public AppConfig(PlannerProperties properties, @Value("${PUBLIC_URL:}") String publicUrl) {
         this.properties = properties;
+        this.publicUrl = publicUrl;
     }
 
     /** Injected instead of calling Instant.now() so tests can fix the time. */
@@ -26,8 +29,10 @@ public class AppConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
+        // Behind Vercel's rewrites the backend sees its own host while the browser sends the site's
+        // Origin, so writes are checked here: every method the frontend uses must be listed.
         registry.addMapping("/api/**")
-                .allowedOrigins(properties.cors().allowedOrigins().toArray(String[]::new))
-                .allowedMethods("GET", "POST");
+                .allowedOrigins(CorsOrigins.of(properties.cors().allowedOrigins(), publicUrl).toArray(String[]::new))
+                .allowedMethods("GET", "POST", "PUT", "DELETE");
     }
 }
