@@ -1,6 +1,6 @@
 # HSR Team Planner backend image (Railway or Fly.io; works on any Docker host).
 # Stage 1 builds the jar with Maven, stage 2 only carries a Java runtime and the jar.
-FROM maven:3.9-eclipse-temurin-21 AS build
+FROM maven:3.9-eclipse-temurin-26 AS build
 WORKDIR /app
 COPY pom.xml .
 # Download dependencies first so they're cached between builds when only the code changes
