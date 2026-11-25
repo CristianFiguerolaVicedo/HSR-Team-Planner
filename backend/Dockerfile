@@ -8,7 +8,7 @@ RUN mvn -q -B dependency:go-offline
 COPY src ./src
 RUN mvn -q -B package -DskipTests
 
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:25-jre
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 # Free hosting gives 512 MB: keep the JVM well inside it (heap ~60%, small GC and code cache).
