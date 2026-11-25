@@ -12,6 +12,9 @@ on:
     - cron: "30 19 * * 3"
   workflow_dispatch:
 
+# Only calls the API with curl: the job's GitHub token needs no permissions at all
+permissions: {}
+
 jobs:
   sync:
     runs-on: ubuntu-latest
