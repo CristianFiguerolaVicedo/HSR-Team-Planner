@@ -32,5 +32,9 @@ RUN java -XX:ArchiveClassesAtExit=app.jsa -Dspring.context.exit=onRefresh \
     -jar app.jar \
     || echo "No CDS archive: the app will start without it"
 
+# Run as an unprivileged user, not root: the app only reads its files
+RUN useradd --system --no-create-home --shell /usr/sbin/nologin app
+USER app
+
 EXPOSE 8080
 ENTRYPOINT ["java", "-XX:SharedArchiveFile=app.jsa", "-jar", "app.jar"]
