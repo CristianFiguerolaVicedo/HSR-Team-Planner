@@ -9,6 +9,10 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # Major versions can break the build: they're upgraded by hand after testing
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: npm
     directory: "/frontend"
     schedule:
@@ -17,6 +21,10 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # Major versions can break the build: they're upgraded by hand after testing
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
@@ -27,3 +35,7 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # Major versions can break the build: they're upgraded by hand after testing
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
