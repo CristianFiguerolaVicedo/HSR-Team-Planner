@@ -17,10 +17,20 @@ public class ApiExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
     }
 
-    /** Bad input caught by the domain (an out-of-range SPD, for example). */
+    /**
+     * Bad input caught by the domain (an out-of-range SPD, for example): its message is written for
+     * the player. One thrown inside a library may describe internals, so that gets a generic text.
+     */
     @ExceptionHandler(IllegalArgumentException.class)
     ProblemDetail badRequest(IllegalArgumentException e) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
+        StackTraceElement[] trace = e.getStackTrace();
+        boolean ours = trace.length > 0 && trace[0].getClassName().startsWith("com.crifigvic.");
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ours ? e.getMessage() : "Invalid request");
+    }
+
+    @ExceptionHandler(TooManyRequestsException.class)
+    ProblemDetail tooManyRequests(TooManyRequestsException e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, e.getMessage());
     }
 
     @ExceptionHandler(InvalidTeamException.class)

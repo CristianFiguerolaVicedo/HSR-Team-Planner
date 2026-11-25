@@ -18,4 +18,7 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     List<Team> findAllByOwnerIdOrderByCreatedAtDesc(Long ownerId);
 
     long countByOwnerId(Long ownerId);
+
+    /** Teams saved without an account. */
+    long countByOwnerIsNull();
 }

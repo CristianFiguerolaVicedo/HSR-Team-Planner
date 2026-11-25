@@ -1,5 +1,7 @@
 package com.crifigvic.hsrplanner.team;
 
+import com.crifigvic.hsrplanner.account.AppUser;
+import jakarta.servlet.http.HttpServletRequest;
 import com.crifigvic.hsrplanner.account.CurrentUserService;
 import com.crifigvic.hsrplanner.team.dto.TeamRequest;
 import com.crifigvic.hsrplanner.team.dto.TeamResponse;
@@ -20,6 +22,7 @@ public class TeamController {
 
     private final TeamService teams;
     private final CurrentUserService currentUser;
+    private final AnonymousTeamLimits anonymousLimits;
 
     /** Live check while building: roles, synergies and rule issues. Saves nothing. */
     @PostMapping("/validate")
@@ -32,8 +35,13 @@ public class TeamController {
      * Logged in: the team gets an owner, who can edit or delete it later. Anonymous: immutable snapshot.
      */
     @PostMapping
-    public ResponseEntity<TeamResponse> create(@Valid @RequestBody TeamRequest request, Principal principal) {
-        TeamResponse created = teams.create(request, currentUser.currentOrNull(principal));
+    public ResponseEntity<TeamResponse> create(@Valid @RequestBody TeamRequest request, Principal principal,
+                                               HttpServletRequest http) {
+        AppUser owner = currentUser.currentOrNull(principal);
+        if (owner == null) {
+            anonymousLimits.check(http.getRemoteAddr());
+        }
+        TeamResponse created = teams.create(request, owner);
         return ResponseEntity.created(URI.create("/api/teams/" + created.shareCode())).body(created);
     }
 
